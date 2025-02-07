@@ -3,12 +3,13 @@ from pathlib import Path
 import urllib.parse
 import scrapy
 import urllib
+import logging
 
 
 
 class BspItemSpider(scrapy.Spider):
     name = 'bsp_item'
-    # allowed_domains = ['bsp-prize.jp']
+    allowed_domains = ['bsp-prize.jp']
     start_urls = []
         
     def start_requests(self):
@@ -25,6 +26,8 @@ class BspItemSpider(scrapy.Spider):
         # 提取页面中的价格
         # price = response.xpath('//span[@class="price"]/text()').get()
         links = response.css(".products_item a")
+        logging.info(f"Found {len(links)} link(s) on page {response.url}")
+        
         yield from response.follow_all(links, callback=self.parse_detail)
 
     
@@ -32,17 +35,22 @@ class BspItemSpider(scrapy.Spider):
         def extract_with_css(query):
             return response.css(query).get(default="").strip()
         
+        description = ""
+        for part in response.css('.productDetail_body  p *::text').getall():  # Iterate through all text and <br>
+            description += part +'\n'
 
         # 输出提取的数据
         data = {
             'url': response.url,
             'title': extract_with_css("h1.headLine1::text"),
-            'date': extract_with_css(".contents .releaseDate::text"),
+            'date': extract_with_css(".contents .releaseDate::text"),            
             'gallery': [i for i in response.css(".productDetail_imgs a::attr(href)").getall() if "javascript" not in i ],
             'thumbs': response.css(".productDetail_imgs img::attr(src)").getall(),
+            'desc': description,
+            'characters': [i.css("::text").get() for i in response.css('.pankuzu_item a') if ("charac" in i.css("::attr(href)").get())]
         }
 
-        data["file_urls"] = [urllib.parse.urljoin(response.url, i) for i in data["gallery"]]
+        # data["file_urls"] = [urllib.parse.urljoin(response.url, i) for i in data["gallery"]]
 
 
         # screenshot: bytes = b64decode(response.raw_api_response["screenshot"])
@@ -89,6 +97,19 @@ class BspItemSpider6(BspItemSpider):
     start_urls = [
           'https://bsp-prize.jp/brand/5/item-by-title/IP00002025/?page=6',
     ]
+
+
+class BspItemSpiderAll(BspItemSpider):
+    name = 'bsp_item_all'
+    start_urls = [
+        'https://bsp-prize.jp/brand/5/item-by-title/IP00002025/',
+        'https://bsp-prize.jp/brand/5/item-by-title/IP00002025/?page=2',
+        'https://bsp-prize.jp/brand/5/item-by-title/IP00002025/?page=3',
+        'https://bsp-prize.jp/brand/5/item-by-title/IP00002025/?page=4',
+        'https://bsp-prize.jp/brand/5/item-by-title/IP00002025/?page=5',
+        'https://bsp-prize.jp/brand/5/item-by-title/IP00002025/?page=6',
+    ]
+
 
 class QuotesSpider(scrapy.Spider):
     name = "quotes"

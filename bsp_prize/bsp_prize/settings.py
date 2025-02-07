@@ -53,8 +53,8 @@ DOWNLOAD_DELAY = 3
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
-    #'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,  # 禁用默认的 UserAgentMiddleware
-    #'scrapy_fake_useragent.middleware.RandomUserAgentMiddleware': 400,   # 启用随机 User-Agent
+    # 'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,  # 禁用默认的 UserAgentMiddleware
+    # 'scrapy_fake_useragent.middleware.RandomUserAgentMiddleware': 400,   # 启用随机 User-Agent
     "bsp_prize.middlewares.BspPrizeDownloaderMiddleware": 543,
     #"bsp_prize.middlewares.CloudscraperMiddleware": 543
 }
@@ -98,6 +98,6 @@ TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
 FEED_EXPORT_ENCODING = "utf-8"
 
 ADDONS = {
-    #"scrapy_zyte_api.Addon": 500,
+    # "scrapy_zyte_api.Addon": 500,
 }
 ZYTE_API_KEY = "ad6ac5e75524470b8dbf172f7757277f"

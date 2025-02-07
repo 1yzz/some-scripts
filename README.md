@@ -2,7 +2,7 @@
 
 ## bsp_prize
 
-howto
+### How to Start
 
 ```shell
 cd bsp_prize
@@ -15,6 +15,9 @@ pip install -r requirements.txt
 # 抓取
 scrapy crawl bsp_item_1
 
+
+#
+scrapy crawl bsp_item_all -O build/bsp_item_all.json
 
 # 部署到scrapyd
 scrapyd-deploy
