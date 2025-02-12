@@ -40,6 +40,6 @@ const combinedData = itemAllData.map((item, index) => {
 });
 
 
-fs.writeFileSync(outputFilePath, JSON.stringify(combinedData, null, 2), 'utf8');
+fs.writeFileSync(outputFilePath, JSON.stringify(combinedData), 'utf8');
 
 console.log('Files have been combined and saved to', outputFilePath);

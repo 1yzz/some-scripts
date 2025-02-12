@@ -18,15 +18,12 @@ const main = () => {
 
     const data = inputJson.map(item => {
         const { thumbs, gallery, date, ...rest } = item
-        return item.characters        
+        return rest        
     })
 
-    
-    fs.writeFileSync(inputFile.replace('.json', `-simple-${Date.now()}.json`), JSON.stringify(data), 'utf8');
-
     // Or, write JSON file (synchronous)
-    // fs.writeFileSync(inputFile.replace('.json', `-simple-${Date.now()}.json`), JSON.stringify(data), 'utf8');
-    // console.log('Data written to file (sync)');
+    fs.writeFileSync(inputFile.replace('.json', `-simple-${Date.now()}.json`), JSON.stringify(data), 'utf8');
+    console.log('Data written to file (sync)');
 
     // async function jsonToExcel(jsonData, filename = 'output.xlsx') {
     //     const workbook = new excel.Workbook();
