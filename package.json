@@ -9,7 +9,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "exceljs": "^4.4.0"
+    "axios": "^1.7.9",
+    "dotenv": "^16.4.7",
+    "exceljs": "^4.4.0",
+    "promise-mysql": "^5.2.0"
   },
   "devDependencies": {
     "@iamtraction/google-translate": "^2.0.1",
