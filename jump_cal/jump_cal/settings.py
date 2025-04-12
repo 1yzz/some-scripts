@@ -70,10 +70,8 @@ DOWNLOAD_DELAY = 3
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-ITEM_PIPELINES = {
-"jump_cal.pipelines.PurifyPipeline": 600,
-"jump_cal.pipelines.JumpCalMongoPipeline": 700,
-}
+#ITEM_PIPELINES = {
+#}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html

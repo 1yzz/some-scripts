@@ -43,3 +43,38 @@ def wecom_notify(text):
         return resp.json()
     except Exception as e:
         print(f"企业微信通知失败: {str(e)}")
+
+
+def wecom_nofity_image_text(title, description, image_url, url):
+    """
+    企业微信图文推送
+    """
+    settings = get_project_settings()
+    if not settings.getbool('WECOM_NOTIFY_ENABLED'):
+        return
+
+    headers = {'Content-Type': 'application/json'}
+    payload = {
+        "msgtype": "news",
+        "news": {
+            "articles": [
+                {
+                    "title": title,
+                    "description": description,
+                    "url": url,
+                    "picurl": image_url
+                }
+            ]
+        }
+    }
+
+    try:
+        resp = requests.post(
+            settings['WECOM_WEBHOOK'],
+            data=json.dumps(payload),
+            headers=headers,
+            timeout=10
+        )
+        return resp.json()
+    except Exception as e:
+        print(f"企业微信通知失败: {str(e)}")

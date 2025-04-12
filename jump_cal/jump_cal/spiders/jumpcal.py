@@ -6,6 +6,12 @@ class JumpcalSpider(scrapy.Spider):
     name = "jump_cal"
     allowed_domains = ["www.shonenjump.com"]
     start_urls = []
+    custom_settings = {
+        'ITEM_PIPELINES': {
+            "jump_cal.pipelines.jump_cal.PurifyPipeline": 600,
+            "jump_cal.pipelines.jump_cal.JumpCalMongoPipeline": 700,
+        },
+    }
 
     def start_requests(self):
         for url in self.start_urls:

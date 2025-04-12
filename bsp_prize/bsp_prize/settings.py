@@ -96,8 +96,3 @@ AUTOTHROTTLE_ENABLED = True
 # Set settings whose default value is deprecated to a future-proof value
 TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
 FEED_EXPORT_ENCODING = "utf-8"
-
-ADDONS = {
-    # "scrapy_zyte_api.Addon": 500,
-}
-ZYTE_API_KEY = "ad6ac5e75524470b8dbf172f7757277f"

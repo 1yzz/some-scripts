@@ -6,7 +6,7 @@ import re
 from itemadapter import ItemAdapter
 import pymongo
 from datetime import datetime
-from .notify import notify_all
+from ..notify import notify_all
 
 class PurifyPipeline:
     """
