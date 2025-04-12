@@ -6,7 +6,6 @@ import urllib
 import logging
 
 
-
 class BspItemSpider(scrapy.Spider):
     name = 'bsp_item'
     allowed_domains = ['bsp-prize.jp']
