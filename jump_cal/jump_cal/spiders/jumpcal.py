@@ -6,6 +6,8 @@ class JumpcalSpider(scrapy.Spider):
     name = "jump_cal"
     allowed_domains = ["www.shonenjump.com"]
     start_urls = []
+    ip = "JUMP"
+
     custom_settings = {
         'ITEM_PIPELINES': {
             "jump_cal.pipelines.jump_cal.PurifyPipeline": 600,
@@ -39,7 +41,8 @@ class JumpcalSpider(scrapy.Spider):
                     'goodsName': item.css('.title2::text').get(default="").strip() or item.css('.title2 a::text').get().strip(),
                     'price': item.css(".price2::text").get().strip(),
                     'maker': item.css(".maker2::text").get().strip(),
-                    'timestamp': datetime.now()
+                    'ip': self.ip,
+                    'url': response.url,
                 }
                 self.log(f"data crawled: {data['goodsName']}")
                 yield data
@@ -47,6 +50,7 @@ class JumpcalSpider(scrapy.Spider):
 
 class JumpCalOPSpider(JumpcalSpider):
     name = 'jump_cal_op'
+    ip = "ONEPIECE"
     start_urls = [
         'https://www.shonenjump.com/j/jumpcalendar/sakuhin/onepiece/'
     ]

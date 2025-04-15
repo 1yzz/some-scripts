@@ -1,9 +1,10 @@
 import scrapy
+from datetime import datetime
 
 class BspPrizeSpider(scrapy.Spider):
     name = "bsp_prize"
     domain = "https://bsp-prize.jp"
-
+    ip = "BSP"
     start_urls = []
 
     custom_settings = {
@@ -38,13 +39,15 @@ class BspPrizeSpider(scrapy.Spider):
             'gallery': [self.domain + i for i in response.css(".productDetail_imgs a::attr(href)").getall() if "javascript" not in i ],
             'thumbs': [self.domain + i for i in response.css(".productDetail_imgs img::attr(src)").getall()],
             'desc': description,            
-            'characters': [i.css("::text").get() for i in response.css('.pankuzu_item a') if ("charac" in i.css("::attr(href)").get())]
+            'characters': [i.css("::text").get() for i in response.css('.pankuzu_item a') if ("charac" in i.css("::attr(href)").get())],
+            'ip': self.ip,
         }
         yield data
 
 
 class BspPrizeOPSpider(BspPrizeSpider):
     name = 'bsp_prize_op'
+    ip = "ONEPIECE"
     start_urls = ['https://bsp-prize.jp/search/?ref=title&title=IP00002025']
     #[
     #    f"https://bsp-prize.jp/search/?ref=title&title=IP00002025&page={index}"  for index in range(2, 21)
