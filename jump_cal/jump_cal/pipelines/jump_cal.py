@@ -86,7 +86,7 @@ class JumpCalMongoPipeline:
         价格: {item.get('genre')}
         系列: {item.get('price')}
         厂商: {item.get('maker')}
-        更新时间: {item.get('timestamp')}
+        更新时间: {item.get('updatedAt')}
         """
 
     def process_item(self, item, spider):
