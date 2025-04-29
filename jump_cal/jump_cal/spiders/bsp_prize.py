@@ -20,7 +20,7 @@ class BspPrizeSpider(scrapy.Spider):
 
     def parse(self, response):
         links = response.css('.products_list .products_item a')
-        for link in links[:1]:
+        for link in links:
             yield response.follow(link, callback=self.parse_detail)
         
     def parse_detail(self, response):
