@@ -100,6 +100,20 @@ class JumpCalFilesPipeline(FilesPipeline):
                 files_info.append(file_info)
                 
                 try:
+                    # Check if file exists in COS
+                    try:
+                        self.cos_client.head_object(
+                            Bucket=self.bucket,
+                            Key=cos_key
+                        )
+                        spider.logger.info(f"File already exists in COS: {cos_key}")
+                        cdn_keys.append(cos_key)
+                        continue
+                    except Exception as e:
+                        if '404' not in str(e):
+                            raise e
+                        spider.logger.info(f"File does not exist in COS, will upload: {cos_key}")
+
                     # Upload to COS
                     spider.logger.info(f"Uploading to COS: {cos_key}")
                     response = self.cos_client.upload_file(
