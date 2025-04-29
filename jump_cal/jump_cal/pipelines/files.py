@@ -31,7 +31,7 @@ class JumpCalFilesPipeline(FilesPipeline):
         return CosS3Client(config)
 
     def file_path(self, request, response=None, info=None, *, item=None):
-        path = "jump_cal/" + item.get("title")  + "/" + PurePosixPath(urlparse_cached(request).path).name
+        path = f"jump_cal/{item.get('ip')}/{item.get('title')}/{PurePosixPath(urlparse_cached(request).path).name}"
         return path
     
     def media_failed(self, failure, request, info):
@@ -84,7 +84,7 @@ class JumpCalFilesPipeline(FilesPipeline):
             for file_url in file_urls:
                 filepath = self.file_path(scrapy.Request(file_url), item=result)
                 local_path = os.path.join(settings.get('FILES_STORE'), filepath)
-                cos_key = f"jump_cal/{result.get('title')}/{os.path.basename(filepath)}"
+                cos_key = f"jump_cal/{result.get('ip')}/{result.get('title')}/{os.path.basename(filepath)}"
                 
                 spider.logger.info(f"Processing file: {file_url}")
                 spider.logger.info(f"Local path: {local_path}")
@@ -141,7 +141,7 @@ class JumpCalFilesPipeline(FilesPipeline):
         files_store = spider.crawler.spider.settings.get('FILES_STORE')
         if not files_store:
             raise ValueError("FILES_STORE setting must be defined")
-        return os.path.join(files_store, 'jump_cal', item.get("title"), filename)
+        return os.path.join(files_store, 'jump_cal', item.get('ip'), item.get("title"), filename)
 
     def get_media_requests(self, item, info):
         for image_url in item['file_urls']:
