@@ -14,6 +14,13 @@ NEWSPIDER_MODULE = "bsp_prize.spiders"
 
 FILES_STORE = "/var/data/scrapy_files"
 
+# Tencent COS Configuration
+COS_SECRET_ID = "your-secret-id"  # Replace with your actual secret ID
+COS_SECRET_KEY = "your-secret-key"  # Replace with your actual secret key
+COS_REGION = "ap-guangzhou"  # Replace with your actual region
+COS_BUCKET = "your-bucket-name"  # Replace with your actual bucket name
+COS_CDN_DOMAIN = "your-cdn-domain"  # Replace with your actual CDN domain
+
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = "bsp_prize (+http://www.yourdomain.com)"

@@ -1,6 +1,7 @@
 import scrapy
 from datetime import datetime
 from scrapy.utils.project import get_project_settings
+import urllib.parse
 
 class JumpcalSpider(scrapy.Spider):
     name = "jump_cal"
@@ -11,7 +12,7 @@ class JumpcalSpider(scrapy.Spider):
     custom_settings = {
         'ITEM_PIPELINES': {
             "jump_cal.pipelines.jump_cal.PurifyPipeline": 600,
-            "jump_cal.pipelines.jump_cal.JumpCalMongoPipeline": 700,
+            "jump_cal.pipelines.jump_cal.JumpCalMongoPipeline": 800,
         },
     }
 
@@ -35,6 +36,10 @@ class JumpcalSpider(scrapy.Spider):
         for group in cal_list:
             release_date = group.css("h5::text").get()
             for item in group.css("ul > li"):
+                # Get image URLs
+                image_urls = item.css("img::attr(src)").getall()
+                file_urls = [urllib.parse.urljoin(response.url, url) for url in image_urls]
+
                 data = {
                     'releaseDate': release_date,
                     'genre': item.css(".genre2::text").get().strip(),
@@ -43,6 +48,7 @@ class JumpcalSpider(scrapy.Spider):
                     'maker': item.css(".maker2::text").get().strip(),
                     'ip': self.ip,
                     'url': response.url,
+                    'file_urls': file_urls,  # Add file URLs for download
                 }
                 self.log(f"data crawled: {data['goodsName']}")
                 yield data

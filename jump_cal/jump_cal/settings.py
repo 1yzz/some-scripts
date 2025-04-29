@@ -21,6 +21,16 @@ MONGO_DATABASE="scrapy_items"
 WECOM_WEBHOOK = config('WECOM_WEBHOOK')
 WECOM_NOTIFY_ENABLED = True
 
+# File storage configuration
+FILES_STORE = "/var/data/scrapy_files"
+
+# Tencent COS Configuration
+COS_SECRET_ID = config('COS_SECRET_ID')  # Get from environment variable
+COS_SECRET_KEY = config('COS_SECRET_KEY')  # Get from environment variable
+COS_REGION = config('COS_REGION', default='ap-shanghai')
+COS_BUCKET = config('COS_BUCKET')
+COS_CDN_DOMAIN = config('COS_CDN_DOMAIN')
+
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = "jump_cal (+http://www.yourdomain.com)"
 
@@ -58,9 +68,9 @@ DOWNLOAD_DELAY = 3
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
-#DOWNLOADER_MIDDLEWARES = {
-#    "jump_cal.middlewares.JumpCalDownloaderMiddleware": 543,
-#}
+DOWNLOADER_MIDDLEWARES = {
+   "jump_cal.middlewares.JumpCalDownloaderMiddleware": 543,
+}
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
@@ -70,8 +80,10 @@ DOWNLOAD_DELAY = 3
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
-#}
+ITEM_PIPELINES = {
+    "jump_cal.pipelines.jump_cal.PurifyPipeline": 600,
+    "jump_cal.pipelines.jump_cal.JumpCalMongoPipeline": 700,
+}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html

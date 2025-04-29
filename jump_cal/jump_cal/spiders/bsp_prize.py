@@ -9,9 +9,9 @@ class BspPrizeSpider(scrapy.Spider):
 
     custom_settings = {
         'ITEM_PIPELINES': {
+            "jump_cal.pipelines.files.JumpCalFilesPipeline": 600,
             "jump_cal.pipelines.bsp_prize.BspMongoPipeline": 700,
         },
-        'ROBOTSTXT_OBEY': False,
     }        
 
     def start_requests(self):
@@ -20,7 +20,7 @@ class BspPrizeSpider(scrapy.Spider):
 
     def parse(self, response):
         links = response.css('.products_list .products_item a')
-        for link in links:
+        for link in links[:1]:
             yield response.follow(link, callback=self.parse_detail)
         
     def parse_detail(self, response):
@@ -42,6 +42,10 @@ class BspPrizeSpider(scrapy.Spider):
             'characters': [i.css("::text").get() for i in response.css('.pankuzu_item a') if ("charac" in i.css("::attr(href)").get())],
             'ip': self.ip,
         }
+
+        data["file_urls"] = [i for i in data["gallery"]]
+
+
         yield data
 
 
@@ -52,3 +56,5 @@ class BspPrizeOPSpider(BspPrizeSpider):
     #[
     #    f"https://bsp-prize.jp/search/?ref=title&title=IP00002025&page={index}"  for index in range(2, 21)
     #]
+
+
