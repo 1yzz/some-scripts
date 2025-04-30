@@ -53,8 +53,10 @@ class BspPrizeOPSpider(BspPrizeSpider):
     name = 'bsp_prize_op'
     ip = "ONEPIECE"
     start_urls = ['https://bsp-prize.jp/search/?ref=title&title=IP00002025']
-    #[
-    #    f"https://bsp-prize.jp/search/?ref=title&title=IP00002025&page={index}"  for index in range(2, 21)
-    #]
 
-
+class BspPrizeOPAllSpider(BspPrizeSpider):
+    name = 'bsp_prize_op_all'
+    ip = "ONEPIECE"
+    start_urls = [
+        f"https://bsp-prize.jp/search/?ref=title&title=IP00002025&page={index}"  for index in range(2, 21)
+    ]   

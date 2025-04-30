@@ -4,20 +4,27 @@ from itemadapter import ItemAdapter
 from scrapy.exceptions import DropItem
 from pathlib import PurePosixPath
 from scrapy.utils.httpobj import urlparse_cached
-from scrapy.pipelines.files import FilesPipeline
 from qcloud_cos import CosConfig, CosS3Client
 from scrapy.utils.project import get_project_settings
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse, quote
+import requests
 from twisted.internet import defer
 
-class JumpCalFilesPipeline(FilesPipeline):
+class JumpCalFilesPipeline:
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
         settings = get_project_settings()
         self.cos_client = self._init_cos_client(settings)
         self.bucket = settings.get('COS_BUCKET')
         self.region = settings.get('COS_REGION')
-        self.cdn_domain = settings.get('COS_CDN_DOMAIN')
+        self.files_store = settings.get('FILES_STORE')
+        
+        # Log COS configuration
+        print("="*50)
+        print("COS Configuration:")
+        print(f"Bucket: {self.bucket}")
+        print(f"Region: {self.region}")
+        print(f"Files Store: {self.files_store}")
+        print("="*50)
 
     def _init_cos_client(self, settings):
         secret_id = settings.get('COS_SECRET_ID')
@@ -30,15 +37,10 @@ class JumpCalFilesPipeline(FilesPipeline):
         config = CosConfig(Region=region, SecretId=secret_id, SecretKey=secret_key)
         return CosS3Client(config)
 
-    def file_path(self, request, response=None, info=None, *, item=None):
-        path = f"jump_cal/{item.get('ip')}/{item.get('title')}/{PurePosixPath(urlparse_cached(request).path).name}"
-        return path
-    
-    def media_failed(self, failure, request, info):
-        # Handle the failed download
-        print(f"Failed to download image: {request.url}")
-        print("Re-downloading...")
-        return request
+    def file_path(self, url, item):
+        filename = os.path.basename(urlparse(url).path)
+        path = f"jump_cal/{item.get('ip')}/{item.get('title')}/{filename}"
+        return path.lstrip('/')  # Remove leading slash
     
     def process_item(self, item, spider):
         spider.logger.info("="*50)
@@ -47,107 +49,119 @@ class JumpCalFilesPipeline(FilesPipeline):
 
         file_urls = item.get("file_urls", [])
         spider.logger.info(f"Found {len(file_urls)} file URLs to process")
-        urls_to_download = []  # List to store URLs that *should* be downloaded
-        settings = get_project_settings()
+        spider.logger.info(f"File URLs: {file_urls}")
+        local_files = []  # Store local file paths
 
         if not file_urls:
             spider.logger.info("No file URLs found, skipping processing")
             return item
 
-        # Check which files need to be downloaded
-        spider.logger.info("Checking which files need to be downloaded...")
+        # Step 1: Download all files
         for file_url in file_urls:
-            filepath = self.file_path(scrapy.Request(file_url), item=item)
-            full_path = os.path.join(settings.get('FILES_STORE'), filepath)
-            if not os.path.exists(full_path):
-                urls_to_download.append(file_url)
-                spider.logger.info(f"File will be downloaded: {file_url}")
-                spider.logger.info(f"Target path: {full_path}")
-            else:
-                spider.logger.info(f"File already exists: {full_path}")
-
-        # Update the item's file_urls with the filtered list
-        item["file_urls"] = urls_to_download
-        spider.logger.info(f"Files to download: {len(urls_to_download)}")
-
-        # Process the item through the parent class to download files
-        spider.logger.info("Starting file downloads...")
-        d = super().process_item(item, spider)
-        
-        def _process_files(result):
-            spider.logger.info("File downloads completed")
-            spider.logger.info("Starting COS uploads...")
-            cdn_keys = []
-            files_info = []
+            filepath = self.file_path(file_url, item)
+            spider.logger.info(f"Filepath: {filepath}")
+            local_path = os.path.join(self.files_store, filepath)
             
-            # Process all files, whether they were just downloaded or already existed
-            for file_url in file_urls:
-                filepath = self.file_path(scrapy.Request(file_url), item=result)
-                local_path = os.path.join(settings.get('FILES_STORE'), filepath)
-                cos_key = f"jump_cal/{result.get('ip')}/{result.get('title')}/{os.path.basename(filepath)}"
-                
-                spider.logger.info(f"Processing file: {file_url}")
-                spider.logger.info(f"Local path: {local_path}")
-                spider.logger.info(f"COS key: {cos_key}")
-                
-                # Add file info to the files field
-                file_info = {
-                    'url': file_url,
-                    'path': filepath,
-                    'checksum': None,  # You can add checksum if needed
-                    'status': 'downloaded'
-                }
-                files_info.append(file_info)
-                
+            spider.logger.info(f"Processing file: {file_url}")
+            spider.logger.info(f"Local path: {local_path}")
+            
+            # Create directory if it doesn't exist
+            os.makedirs(os.path.dirname(local_path), exist_ok=True)
+            
+            # Download file if it doesn't exist locally
+            if not os.path.exists(local_path):
                 try:
-                    # Check if file exists in COS
-                    try:
-                        self.cos_client.head_object(
-                            Bucket=self.bucket,
-                            Key=cos_key
-                        )
-                        spider.logger.info(f"File already exists in COS: {cos_key}")
-                        cdn_keys.append(cos_key)
-                        continue
-                    except Exception as e:
-                        if '404' not in str(e):
-                            raise e
-                        spider.logger.info(f"File does not exist in COS, will upload: {cos_key}")
+                    spider.logger.info(f"Downloading file: {file_url}")
+                    response = requests.get(file_url, headers={'Referer': item['url']})
+                    response.raise_for_status()
+                    
+                    with open(local_path, 'wb') as f:
+                        f.write(response.content)
+                    spider.logger.info(f"Successfully downloaded to: {local_path}")
+                except Exception as e:
+                    spider.logger.error(f"Failed to download {file_url}: {str(e)}")
+                    continue
+            
+            # Verify file exists and has content
+            if os.path.exists(local_path) and os.path.getsize(local_path) > 0:
+                local_files.append(local_path)
+                spider.logger.info(f"File ready for processing: {local_path}")
+                spider.logger.info(f"File size: {os.path.getsize(local_path)} bytes")
+            else:
+                spider.logger.error(f"File not available: {local_path}")
 
-                    # Upload to COS
-                    spider.logger.info(f"Uploading to COS: {cos_key}")
-                    response = self.cos_client.upload_file(
+        spider.logger.info(f"Total local files ready for processing: {len(local_files)}")
+        spider.logger.info(f"Local files: {local_files}")
+
+        # Step 2: Process all local files for CDN upload
+        cdn_keys = []
+        for local_path in local_files:
+            # Generate COS key from local path
+            cos_key = os.path.relpath(local_path, self.files_store).replace('\\', '/').lstrip('/')
+            # URL encode the key, but preserve forward slashes
+            cos_key = '/'.join(quote(part, safe='') for part in cos_key.split('/'))
+            spider.logger.info(f"Processing for CDN: {cos_key}")
+            
+            try:
+                # Check if file exists in COS
+                try:
+                    spider.logger.info(f"Checking if file exists in COS: {cos_key}")
+                    spider.logger.info(f"Using bucket: {self.bucket}")
+                    spider.logger.info(f"Using region: {self.region}")
+                    self.cos_client.head_object(
                         Bucket=self.bucket,
-                        LocalFilePath=local_path,
                         Key=cos_key
                     )
-                    spider.logger.info(f"COS upload response: {response['ETag']}")
-                    # Add COS key to the list
+                    spider.logger.info(f"File already exists in COS: {cos_key}")
                     cdn_keys.append(cos_key)
-                    
-                    spider.logger.info(f"Successfully uploaded {local_path} to COS as {cos_key}")
+                    spider.logger.info(f"Added existing key to cdn_keys. Current count: {len(cdn_keys)}")
+                    continue
                 except Exception as e:
-                    spider.logger.error(f"Failed to upload {local_path} to COS: {str(e)}")
-            
-            # Add CDN keys to the item
-            result['cdn_keys'] = cdn_keys
-            
-            # Remove file_urls and files fields before returning to MongoDB
-            if 'file_urls' in result:
-                del result['file_urls']
-            if 'files' in result:
-                del result['files']
-            
-            spider.logger.info("="*50)
-            spider.logger.info(f"Completed processing item: {result.get('title')}")
-            spider.logger.info(f"Total files processed: {len(files_info)}")
-            spider.logger.info(f"Total CDN keys generated: {len(cdn_keys)}")
-            spider.logger.info("="*50)
-            
-            return result
+                    error_dict = getattr(e, '__dict__', {})
+                    spider.logger.info(f"Error dict: {error_dict}")
+                    if error_dict.get('_status_code') == 404:
+                        spider.logger.info(f"File does not exist in COS, will upload: {cos_key}")
+                    else:
+                        spider.logger.error(f"Error checking COS: {str(e)}")
+                        raise e
 
-        d.addCallback(_process_files)
-        return d
+                # Upload to COS
+                spider.logger.info(f"Uploading to COS: {cos_key}")
+                response = self.cos_client.upload_file(
+                    Bucket=self.bucket,
+                    LocalFilePath=local_path,
+                    Key=cos_key
+                )
+                spider.logger.info(f"COS upload response: {response['ETag']}")
+                cdn_keys.append(cos_key)
+                spider.logger.info(f"Added new key to cdn_keys. Current count: {len(cdn_keys)}")
+                spider.logger.info(f"Successfully uploaded to COS: {cos_key}")
+            except Exception as e:
+                spider.logger.error(f"Failed to upload to COS: {str(e)}")
+                spider.logger.error(f"Error type: {type(e)}")
+                spider.logger.error(f"Error details: {str(e)}")
+                continue
+
+        # Step 3: Update item with CDN keys
+        if cdn_keys:
+            spider.logger.info(f"Adding {len(cdn_keys)} CDN keys to item")
+            spider.logger.info(f"CDN keys: {cdn_keys}")
+            item['cdn_keys'] = cdn_keys
+        else:
+            spider.logger.warning("No CDN keys were generated")
+            spider.logger.warning(f"Local files processed: {local_files}")
+        
+        # Remove file_urls field before returning to MongoDB
+        if 'file_urls' in item:
+            del item['file_urls']
+        
+        spider.logger.info("="*50)
+        spider.logger.info(f"Completed processing item: {item.get('title')}")
+        spider.logger.info(f"Total files processed: {len(local_files)}")
+        spider.logger.info(f"Total CDN keys generated: {len(cdn_keys)}")
+        spider.logger.info("="*50)
+        
+        return item
 
     def _get_file_path_from_url(self, url, item, spider):
         """Helper function to construct the file path (mirrors file_path)."""

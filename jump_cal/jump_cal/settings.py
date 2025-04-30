@@ -32,10 +32,10 @@ COS_BUCKET = config('COS_BUCKET')
 COS_CDN_DOMAIN = config('COS_CDN_DOMAIN')
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-#USER_AGENT = "jump_cal (+http://www.yourdomain.com)"
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
 # Obey robots.txt rules
-ROBOTSTXT_OBEY = True
+# ROBOTSTXT_OBEY = True
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32
@@ -80,14 +80,14 @@ DOWNLOADER_MIDDLEWARES = {
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-ITEM_PIPELINES = {
-    "jump_cal.pipelines.jump_cal.PurifyPipeline": 600,
-    "jump_cal.pipelines.jump_cal.JumpCalMongoPipeline": 700,
-}
+# ITEM_PIPELINES = {
+#     "jump_cal.pipelines.jump_cal.PurifyPipeline": 600,
+#     "jump_cal.pipelines.jump_cal.JumpCalMongoPipeline": 700,
+# }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html
-AUTOTHROTTLE_ENABLED = True
+# AUTOTHROTTLE_ENABLED = True
 # The initial download delay
 #AUTOTHROTTLE_START_DELAY = 5
 # The maximum download delay to be set in case of high latencies

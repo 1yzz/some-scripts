@@ -12,8 +12,11 @@ class JumpcalSpider(scrapy.Spider):
     custom_settings = {
         'ITEM_PIPELINES': {
             "jump_cal.pipelines.jump_cal.PurifyPipeline": 600,
-            "jump_cal.pipelines.jump_cal.JumpCalMongoPipeline": 800,
+            "jump_cal.pipelines.jump_cal.JumpCalMongoPipeline": 700,
+            "jump_cal.pipelines.files.JumpCalFilesPipeline": 300,
         },
+        'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'ROBOTSTXT_OBEY': True,
     }
 
     def start_requests(self):
