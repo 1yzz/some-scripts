@@ -79,7 +79,7 @@ class BspMongoPipeline:
         """格式化通知内容"""
         return f"""
         发售时间: {item.get('releaseDate')}
-        更新时间: {item.get('updatedAt')}
+        更新时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         """
 
     def process_item(self, item, spider):
