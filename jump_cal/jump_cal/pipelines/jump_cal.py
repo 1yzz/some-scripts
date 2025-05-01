@@ -78,17 +78,6 @@ class JumpCalMongoPipeline:
         self.client.close()
 
 
-    def _format_message(self, item):
-        """格式化通知内容"""
-        return f"""
-        商品名称: {item['goodsName']}
-        发售时间: {item.get('releaseDate')}
-        价格: {item.get('genre')}
-        系列: {item.get('price')}
-        厂商: {item.get('maker')}
-        更新时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-        """
-
     def process_item(self, item, spider):
         # Add timestamps to the item
         now = datetime.now()
@@ -114,19 +103,16 @@ class JumpCalMongoPipeline:
                 upsert=True
             )
             spider.logger.info(f"Upserted item with name: {adapter['goodsName']}")
+            # 如果更新了数据，则通知
 
             if result.modified_count > 0 and \
                     (old_data["price"] != adapter['price']
                      or old_data['releaseDate'] != adapter['releaseDate']):  # 更新操作
-                notify_all(
-                    title="更新数据",
-                    content=self._format_message(adapter),
-                )
+                
+                item["notify"] = True
             elif not old_data:
-                notify_all(
-                    title="新增数据",
-                    content=self._format_message(adapter),
-                )
+                item["notify"] = True
+                item['Add'] = True
 
         except pymongo.errors.DuplicateKeyError:
             spider.logger.warning(f"Duplicate name found: {adapter['goodsName']}")

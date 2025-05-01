@@ -13,7 +13,7 @@ class JumpcalSpider(scrapy.Spider):
         'ITEM_PIPELINES': {
             "jump_cal.pipelines.jump_cal.PurifyPipeline": 600,
             "jump_cal.pipelines.jump_cal.JumpCalMongoPipeline": 700,
-            "jump_cal.pipelines.files.JumpCalFilesPipeline": 300,
+            "jump_cal.pipelines.notify.NotifyPipeline": 800,
         },
         'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'ROBOTSTXT_OBEY': True,
