@@ -2,18 +2,16 @@ import os
 from datetime import datetime
 import pymongo
 from pymongo import UpdateOne
-from openai import OpenAI
-from typing import List, Dict
-import sys  # Add this import
+import sys
+from jump_cal.translators.deepseek_translator import DeepSeekTranslator
 
-
-class DeepSeekTranslator:
+class MongoTranslator:
     def __init__(self, mongo_uri, mongo_db, source_collection, target_collection, translate_all=False):
         self.mongo_uri = mongo_uri
         self.mongo_db = mongo_db
         self.source_collection = source_collection
         self.target_collection = target_collection
-        self.deepseek = OpenAI(api_key=os.getenv('DEEPSEEK_API_KEY'), base_url="https://api.deepseek.com")
+        self.translator = DeepSeekTranslator()
         self.FIELDS_TO_TRANSLATE = ['title', 'goodsName']
         self.translate_all = translate_all
 
@@ -25,99 +23,6 @@ class DeepSeekTranslator:
 
     def close_mongodb(self):
         self.client.close()
-
-    def batch_translate_texts(self, texts: List[str]) -> List[str]:
-        try:
-            # Combine all texts into one prompt with numbering
-            combined_text = "\n---\n".join([f"{i+1}. {text}" for i, text in enumerate(texts)])
-            
-            print(f"\nSending batch of {len(texts)} texts for translation...")
-            print(f"Original texts:\n{combined_text}")
-            
-            response = self.deepseek.chat.completions.create(
-                model="deepseek-coder",
-                temperature=1.3,
-                messages=[
-                    {"role": "system", "content": "You are a helpful assistant that translates Japanese text to Chinese. Please translate each text separately and maintain the numbering. Return only the translations, one per line, with the same numbering."},
-                    {"role": "user", "content": f"Translate the following texts from Japanese to Chinese, keeping the same numbering:\n{combined_text}"}
-                ]
-            )
-            
-            # Get the response content
-            response_text = response.choices[0].message.content.strip()
-            print(f"Translation response:\n{response_text}")
-            
-            # Split the response into individual translations
-            translations = []
-            for line in response_text.split('\n'):
-                # Skip empty lines and separator lines
-                if not line.strip() or line.strip() == '---':
-                    continue
-                    
-                # Try to extract the translation
-                try:
-                    # Handle both formats: "1. translation" or just "translation"
-                    if '. ' in line:
-                        translation = line.split('. ', 1)[1]
-                    else:
-                        translation = line
-                    translations.append(translation.strip())
-                except Exception as e:
-                    print(f"Error parsing translation line: {line}")
-                    translations.append(line.strip())
-            
-            # Verify we got the right number of translations
-            if len(translations) != len(texts):
-                print(f"Warning: Got {len(translations)} translations for {len(texts)} texts")
-                # Pad with original texts if we got fewer translations
-                while len(translations) < len(texts):
-                    translations.append(texts[len(translations)])
-            
-            print(f"Processed translations:\n{translations}")
-            return translations
-            
-        except Exception as e:
-            print(f"Batch translation error: {str(e)}")
-            return texts
-
-    def translate_documents_batch(self, docs: List[Dict]) -> List[Dict]:
-        translated_docs = []
-        
-        # Prepare batches for each field
-        for field in self.FIELDS_TO_TRANSLATE:
-            texts_to_translate = []
-            doc_indices = []
-            
-            # Collect all texts for this field
-            for i, doc in enumerate(docs):
-                if field in doc and doc[field]:
-                    texts_to_translate.append(doc[field])
-                    doc_indices.append(i)
-            
-            if texts_to_translate:
-                print(f"\nTranslating {len(texts_to_translate)} {field} fields...")
-                translations = self.batch_translate_texts(texts_to_translate)
-                
-                # Apply translations back to documents
-                for idx, translation in zip(doc_indices, translations):
-                    if idx >= len(translated_docs):
-                        translated_docs.append(docs[idx].copy())
-                    translated_docs[idx][f'{field}CN'] = translation
-        
-        # Add timestamp and verify translations
-        for doc in translated_docs:
-            
-            # Verify at least one field was translated
-            translation_performed = False
-            for field in self.FIELDS_TO_TRANSLATE:
-                if f'{field}CN' in doc and doc[f'{field}CN'] != doc[field]:
-                    translation_performed = True
-                    break
-            
-            if not translation_performed:
-                raise ValueError(f"No translation was performed for document {doc['_id']}")
-        
-        return translated_docs
 
     def process_collection(self):
         try:
@@ -146,8 +51,11 @@ class DeepSeekTranslator:
                 print(f"\nProcessing batch {processed_count//batch_size + 1} ({len(docs_to_translate)} documents)...")
                 
                 try:
-                    # Translate the batch
-                    translated_docs = self.translate_documents_batch(docs_to_translate)
+                    # Translate the batch using the DeepSeek translator module
+                    translated_docs = self.translator.batch_translate_documents(
+                        docs_to_translate,
+                        self.FIELDS_TO_TRANSLATE
+                    )
                     
                     # Update target collection with only translated fields
                     bulk_operations = []
@@ -198,6 +106,7 @@ class DeepSeekTranslator:
         finally:
             self.close_mongodb()
 
+
 def main():
     # Simple flag check for --all
     translate_all = len(sys.argv) > 1 and sys.argv[1] == '--all'
@@ -209,7 +118,7 @@ def main():
     target_collection = 'jump_cal_op_translated'  # Target collection for translated content
     
     # Initialize and run translator
-    translator = DeepSeekTranslator(
+    translator = MongoTranslator(
         mongo_uri=mongo_uri,
         mongo_db=mongo_db,
         source_collection=source_collection,
@@ -218,6 +127,7 @@ def main():
     )
     
     translator.process_collection()
+
 
 if __name__ == "__main__":
     main()
