@@ -68,8 +68,8 @@ class DeepSeekTranslator:
                 model=self.model,
                 temperature=self.temperature,
                 messages=[
-                    {"role": "system", "content": "You are a helpful assistant that translates Japanese text to Chinese. Please translate each text separately and maintain the numbering. Return only the translations, one per line, with the same numbering."},
-                    {"role": "user", "content": f"Translate the following texts from Japanese to Chinese, keeping the same numbering:\n{combined_text}"}
+                    {"role": "system", "content": "You are a helpful assistant that translates Japanese text to Chinese. Please translate each text separately and maintain the numbering. Return only the translations, one per line, with the same numbering format: '1. translation', '2. translation', etc."},
+                    {"role": "user", "content": f"Translate the following texts from Japanese to Chinese, keeping the same numbering format:\n{combined_text}"}
                 ]
             )
             
@@ -79,31 +79,55 @@ class DeepSeekTranslator:
             
             # Split the response into individual translations
             translations = []
-            for line in response_text.split('\n'):
+            lines = response_text.split('\n')
+            
+            # 使用更严格的解析逻辑
+            for line in lines:
+                line = line.strip()
+                
                 # Skip empty lines and separator lines
-                if not line.strip() or line.strip() == '---':
+                if not line or line == '---':
                     continue
-                    
-                # Try to extract the translation
-                try:
-                    # Handle both formats: "1. translation" or just "translation"
-                    if '. ' in line:
-                        translation = line.split('. ', 1)[1]
+                
+                # 只处理以数字开头的行
+                if line and line[0].isdigit():
+                    # 查找第一个点号的位置
+                    dot_index = line.find('. ')
+                    if dot_index > 0:
+                        # 提取数字部分
+                        number_part = line[:dot_index]
+                        if number_part.isdigit():
+                            # 提取翻译部分
+                            translation = line[dot_index + 2:].strip()
+                            if translation:  # 确保翻译不为空
+                                translations.append(translation)
+                            else:
+                                print(f"Warning: Empty translation for line: {line}")
+                        else:
+                            print(f"Warning: Invalid number format in line: {line}")
                     else:
-                        translation = line
-                    translations.append(translation.strip())
-                except Exception as e:
-                    print(f"Error parsing translation line: {line}")
-                    translations.append(line.strip())
+                        print(f"Warning: No dot separator found in line: {line}")
+                else:
+                    print(f"Warning: Skipping non-numbered line: {line}")
             
-            # Verify we got the right number of translations
+            # 验证翻译数量
             if len(translations) != len(texts):
-                print(f"Warning: Got {len(translations)} translations for {len(texts)} texts")
-                # Pad with original texts if we got fewer translations
-                while len(translations) < len(texts):
-                    translations.append(texts[len(translations)])
+                print(f"Error: Got {len(translations)} translations for {len(texts)} texts")
+                print(f"Expected {len(texts)} translations, got {len(translations)}")
+                
+                # 如果翻译数量不匹配，尝试修复
+                if len(translations) > len(texts):
+                    # 如果翻译过多，截取前N个
+                    print(f"Truncating to first {len(texts)} translations")
+                    translations = translations[:len(texts)]
+                elif len(translations) < len(texts):
+                    # 如果翻译不足，用原文补充
+                    print(f"Padding with original texts for missing translations")
+                    while len(translations) < len(texts):
+                        missing_index = len(translations)
+                        translations.append(texts[missing_index])
             
-            print(f"Processed translations:\n{translations}")
+            print(f"Final translations count: {len(translations)}")
             return translations
             
         except Exception as e:

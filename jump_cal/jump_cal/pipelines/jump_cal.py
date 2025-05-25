@@ -102,6 +102,12 @@ class JumpCalMongoPipeline:
                 update,
                 upsert=True
             )
+            spider.logger.info(f"result: {result}")
+
+            new_data = self.collection.find_one(query)
+            
+            item["_id"] = new_data["_id"]
+
             spider.logger.info(f"Upserted item with name: {adapter['goodsName']}")
             # 如果更新了数据，则通知
 
@@ -118,5 +124,6 @@ class JumpCalMongoPipeline:
             spider.logger.warning(f"Duplicate name found: {adapter['goodsName']}")
         except Exception as e:
             spider.logger.error(f"Error processing item: {e}")
+
 
         return item

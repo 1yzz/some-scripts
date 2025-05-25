@@ -1,4 +1,9 @@
 from decouple import config
+import logging
+
+# 全局禁用 pymongo 日志
+logging.getLogger('pymongo').setLevel(logging.WARNING)
+
 # Scrapy settings for jump_cal project
 #
 # For simplicity, this file contains only settings considered important or
@@ -80,10 +85,11 @@ DOWNLOADER_MIDDLEWARES = {
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-# ITEM_PIPELINES = {
-#     "jump_cal.pipelines.jump_cal.PurifyPipeline": 600,
-#     "jump_cal.pipelines.jump_cal.JumpCalMongoPipeline": 700,
-# }
+ITEM_PIPELINES = {
+    "jump_cal.pipelines.jump_cal.PurifyPipeline": 600,
+    "jump_cal.pipelines.jump_cal.JumpCalMongoPipeline": 700,
+    "jump_cal.pipelines.translation.TranslationPipeline": 800,
+}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html

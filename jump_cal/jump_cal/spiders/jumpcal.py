@@ -13,7 +13,8 @@ class JumpcalSpider(scrapy.Spider):
         'ITEM_PIPELINES': {
             "jump_cal.pipelines.jump_cal.PurifyPipeline": 600,
             "jump_cal.pipelines.jump_cal.JumpCalMongoPipeline": 700,
-            "jump_cal.pipelines.notify.NotifyPipeline": 800,
+            "jump_cal.pipelines.translation.TranslationPipeline": 800,
+            "jump_cal.pipelines.notify.NotifyPipeline": 900,
         },
         'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'ROBOTSTXT_OBEY': True,
@@ -60,6 +61,7 @@ class JumpcalSpider(scrapy.Spider):
 class JumpCalOPSpider(JumpcalSpider):
     name = 'jump_cal_op'
     ip = "ONEPIECE"
+    fields_to_translate = ['goodsName', 'description']
     start_urls = [
         'https://www.shonenjump.com/j/jumpcalendar/sakuhin/onepiece/'
     ]
