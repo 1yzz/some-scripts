@@ -85,11 +85,7 @@ DOWNLOADER_MIDDLEWARES = {
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-ITEM_PIPELINES = {
-    "jump_cal.pipelines.jump_cal.PurifyPipeline": 600,
-    "jump_cal.pipelines.jump_cal.JumpCalMongoPipeline": 700,
-    "jump_cal.pipelines.translation.TranslationPipeline": 800,
-}
+ITEM_PIPELINES = {}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html

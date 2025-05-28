@@ -63,10 +63,6 @@ class TranslationPipeline:
         
         # 获取文档的 _id（由 MongoDB pipeline 生成）
         item_id = item.get('_id')
-        
-        spider.logger.info("-" * 100)
-        spider.logger.info(f"item_id: {item_id}")
-        spider.logger.info("-" * 100)
 
         if not item_id:
             return item
