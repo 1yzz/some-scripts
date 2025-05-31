@@ -8,6 +8,7 @@ class JumpcalSpider(scrapy.Spider):
     allowed_domains = ["www.shonenjump.com"]
     start_urls = []
     ip = "JUMP"
+    collection_name = "jump_cal"
 
     custom_settings = {
         'ITEM_PIPELINES': {
@@ -65,3 +66,36 @@ class JumpCalOPSpider(JumpcalSpider):
     start_urls = [
         'https://www.shonenjump.com/j/jumpcalendar/sakuhin/onepiece/'
     ]
+
+class JumpCalHunterSpider(JumpcalSpider):
+    name = 'jump_cal_hunter'
+    ip = "HUNTER"
+    fields_to_translate = ['goodsName', 'description']
+    start_urls = [
+        'https://www.shonenjump.com/j/jumpcalendar/sakuhin/hunter/'
+    ]
+
+class JumpCalNarutoSpider(JumpcalSpider):
+    name = 'jump_cal_naruto'
+    ip = "NARUTO"
+    fields_to_translate = ['goodsName', 'description']
+    start_urls = [
+        'https://www.shonenjump.com/j/jumpcalendar/sakuhin/naruto/'
+    ]
+
+class JumpCalBleachSpider(JumpcalSpider):
+    name = 'jump_cal_bleach'
+    ip = "BLEACH"
+    fields_to_translate = ['goodsName', 'description']
+    start_urls = [
+        'https://www.shonenjump.com/j/jumpcalendar/sakuhin/bleach/'
+    ]
+
+class JumpCalDragonBallSpider(JumpcalSpider):
+    name = 'jump_cal_dragonball'
+    ip = "DRAGONBALL"
+    fields_to_translate = ['goodsName', 'description']
+    start_urls = [
+        'https://www.shonenjump.com/j/jumpcalendar/sakuhin/dragonball/'
+    ]
+

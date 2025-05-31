@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-独立的翻译服务
+独立的翻译服务 - 数据分离版本
 持续监控待翻译队列并处理翻译任务
 支持翻译缓存以避免重复翻译
+只将翻译结果保存到独立的翻译集合，保持源数据干净
 """
 
 import os
@@ -151,7 +152,7 @@ class TranslationService:
         return items_to_translate
         
     def process_collection_pending(self, collection_name, collection_config):
-        """处理单个集合的待翻译项目"""
+        """处理单个集合的待翻译项目 - 只保存到翻译集合，不更新源集合"""
         try:
             fields_to_translate = collection_config
             
@@ -187,14 +188,14 @@ class TranslationService:
             # 使用缓存进行翻译
             translated_docs = self.translate_with_cache(items_to_translate, fields_to_translate)
             
-            # 准备批量操作
+            # 准备批量操作 - 只保存到翻译集合
             translated_operations = []
-            source_operations = []
             pending_deletions = []
             
             for doc in translated_docs:
                 translated_data = {
                     'item_id': doc['_id'],
+                    'collection_name': collection_name,
                     'created_at': datetime.now(),
                     'updated_at': datetime.now()
                 }
@@ -205,9 +206,16 @@ class TranslationService:
                     if translated_field in doc:
                         translated_data[translated_field] = doc[translated_field]
                 
+                # 保存原始字段用于对比和查询
+                for field in fields_to_translate:
+                    if field in doc:
+                        translated_data[f'original_{field}'] = doc[field]
+                
                 # 检查是否有翻译内容
-                if any(key not in ['item_id', 'created_at', 'updated_at'] for key in translated_data.keys()):
-                    # 添加到翻译集合
+                has_translation = any(key.endswith('CN') for key in translated_data.keys())
+                
+                if has_translation:
+                    # 只添加到翻译集合
                     translated_operations.append(
                         UpdateOne(
                             {'item_id': doc['_id']},
@@ -216,36 +224,19 @@ class TranslationService:
                         )
                     )
                     
-                    # 更新源集合
-                    update_fields = {}
-                    for field in fields_to_translate:
-                        translated_field = f'{field}CN'
-                        if translated_field in translated_data:
-                            update_fields[translated_field] = translated_data[translated_field]
-                    
-                    if update_fields:
-                        source_operations.append(
-                            UpdateOne(
-                                {'_id': doc['_id']},
-                                {'$set': update_fields}
-                            )
-                        )
-                    
                     # 标记为需要从 pending 中删除
                     pending_deletions.append(doc['_id'])
             
-            # 执行批量操作
+            # 执行批量操作 - 只更新翻译集合
             if translated_operations:
                 translated_collection.bulk_write(translated_operations)
-                
-            if source_operations:
-                source_collection.bulk_write(source_operations)
+                print(f"[{collection_name}] Saved {len(translated_operations)} translations to {collection_name}_translated")
                 
             # 从 pending 表中删除已处理的项目
             if pending_deletions:
                 pending_collection.delete_many({'item_id': {'$in': pending_deletions}})
                 
-            print(f"[{collection_name}] Successfully processed {len(pending_deletions)} items")
+            print(f"[{collection_name}] Successfully processed {len(pending_deletions)} items (source data unchanged)")
             return len(pending_deletions)
             
         except Exception as e:
@@ -276,7 +267,9 @@ class TranslationService:
     
     def run(self):
         """运行翻译服务"""
-        print("Starting Translation Service with Cache...")
+        print("Starting Translation Service (Data Separation Mode)...")
+        print("NOTE: Translations will only be saved to separate translation collections")
+        print("Source data collections will remain unchanged and clean.")
         print(f"Check interval: {self.check_interval} seconds")
         print(f"Batch size: {self.batch_size}")
         print(f"Collections: {list(self.collections_config.keys())}")
@@ -355,7 +348,7 @@ def main():
     else:
         # 默认配置
         collections_config = {
-            'jump_cal_op': ['goodsName', 'description'],
+            'jump_cal': ['goodsName', 'description'],
             'bsp_prize': ['title', 'content']
         }
     
@@ -374,9 +367,9 @@ def main():
         service.close_mongodb()
         return
     
-    print("Translation Service Configuration:")
+    print("Translation Service Configuration (Data Separation Mode):")
     for collection, fields in collections_config.items():
-        print(f"  {collection}: fields={fields}")
+        print(f"  {collection}: fields={fields} -> {collection}_translated")
     print()
     
     # 运行服务

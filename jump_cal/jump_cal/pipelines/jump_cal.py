@@ -35,10 +35,12 @@ class JumpCalMongoPipeline:
 
     @classmethod
     def from_crawler(cls, crawler):
+        spider_name = crawler.spider.name
+        mongo_collection = getattr(crawler.spider, 'collection_name', f'{spider_name}')
         return cls(
             mongo_uri=crawler.settings.get("MONGO_URI"),
             mongo_db=crawler.settings.get("MONGO_DATABASE", "items"),
-            mongo_collection="jump_cal_op"
+            mongo_collection=mongo_collection
         )
 
     def open_spider(self, spider):
