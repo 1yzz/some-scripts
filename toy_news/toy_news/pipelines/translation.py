@@ -8,9 +8,10 @@ class TranslationPipeline:
     只处理包含product_hash的归一化数据
     直接在 toys_normalized 集合中添加翻译字段
     """
-    def __init__(self, mongo_uri, mongo_db):
+    def __init__(self, mongo_uri, mongo_db, mongo_collection):
         self.mongo_uri = mongo_uri
         self.mongo_db = mongo_db
+        self.mongo_collection = mongo_collection
         self.client = None
         self.db = None
         
@@ -22,6 +23,7 @@ class TranslationPipeline:
         return cls(
             mongo_uri=crawler.settings.get('MONGO_URI', 'mongodb://localhost:27017/'),
             mongo_db=crawler.settings.get('MONGO_DATABASE', 'scrapy_items'),
+            mongo_collection=crawler.settings.get('MONGO_COLLECTION', 'toys_normalized'),
         )
 
     def open_spider(self, spider):
@@ -30,8 +32,8 @@ class TranslationPipeline:
         self.db = self.client[self.mongo_db]
         
         # 归一化数据集合
-        self.normalized_collection = self.db['toys_normalized']
-        self.pending_collection = self.db['translation_pending']
+        self.normalized_collection = self.db[self.mongo_collection]
+        self.pending_collection = self.db['toys_translation_pending']
         
         # 创建索引
         self.normalized_collection.create_index('product_hash', unique=True)
@@ -39,7 +41,7 @@ class TranslationPipeline:
         
         spider.logger.info(f"Translation pipeline initialized for normalized data")
         spider.logger.info(f"Fields to translate: {self.fields_to_translate}")
-        spider.logger.info(f"Translation results will be stored directly in toys_normalized")
+        spider.logger.info(f"Translation results will be stored directly in {self.mongo_collection}")
 
     def close_spider(self, spider):
         # 显示待翻译队列状态

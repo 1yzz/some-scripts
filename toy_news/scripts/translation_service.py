@@ -23,9 +23,10 @@ from toy_news.translators.deepseek_translator import DeepSeekTranslator
 
 
 class TranslationService:
-    def __init__(self, mongo_uri, mongo_db, check_interval=10):
+    def __init__(self, mongo_uri, mongo_db, mongo_collection, check_interval=10):
         self.mongo_uri = mongo_uri
         self.mongo_db = mongo_db
+        self.mongo_collection = mongo_collection
         self.check_interval = check_interval
         self.translator = DeepSeekTranslator()
         self.batch_size = 10
@@ -39,9 +40,9 @@ class TranslationService:
         self.db = self.client[self.mongo_db]
         
         # 统一的集合
-        self.normalized_collection = self.db['toys_normalized']
-        self.pending_collection = self.db['translation_pending']
-        self.cache_collection = self.db['translation_cache']
+        self.normalized_collection = self.db[self.mongo_collection]
+        self.pending_collection = self.db['toys_translation_pending']
+        self.cache_collection = self.db['toys_translation_cache']
         
         # 创建缓存索引 (只需要哈希索引，不需要文本索引)
         self.cache_collection.create_index('text_hash', unique=True)
@@ -308,6 +309,8 @@ def main():
                        help='MongoDB URI (default: mongodb://localhost:27017/)')
     parser.add_argument('--mongo-db', default='scrapy_items',
                        help='MongoDB database (default: scrapy_items)')
+    parser.add_argument('--mongo-collection', default='toys_normalized',
+                       help='MongoDB collection (default: toys_normalized)')
     parser.add_argument('--show-stats', action='store_true',
                        help='Show statistics and exit')
     
@@ -317,6 +320,7 @@ def main():
     service = TranslationService(
         mongo_uri=args.mongo_uri,
         mongo_db=args.mongo_db,
+        mongo_collection=args.mongo_collection,
         check_interval=args.interval
     )
     
@@ -328,7 +332,7 @@ def main():
         return
     
     print("Unified Translation Service Configuration:")
-    print(f"  Source: translation_pending -> toys_normalized")
+    print(f"  Source: toys_translation_pending -> {args.mongo_collection}")
     print(f"  Fields: {service.fields_to_translate}")
     print()
     
