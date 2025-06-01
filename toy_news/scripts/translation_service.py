@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-统一翻译服务
-处理归一化数据的翻译任务
-支持翻译缓存以避免重复翻译
-直接在 products_normalized 集合中更新翻译结果
+翻译服务 - 统一翻译架构版本
+
+直接在 toys_normalized 集合中更新翻译结果
+无需额外的翻译集合，简化数据流
 """
 
 import os
@@ -39,7 +39,7 @@ class TranslationService:
         self.db = self.client[self.mongo_db]
         
         # 统一的集合
-        self.normalized_collection = self.db['products_normalized']
+        self.normalized_collection = self.db['toys_normalized']
         self.pending_collection = self.db['translation_pending']
         self.cache_collection = self.db['translation_cache']
         
@@ -196,7 +196,7 @@ class TranslationService:
                         has_translation = True
                 
                 if has_translation:
-                    # 更新 products_normalized 集合
+                    # 更新 toys_normalized 集合
                     update_operations.append(
                         UpdateOne(
                             {'product_hash': product_hash},
@@ -213,7 +213,7 @@ class TranslationService:
             # 执行批量操作
             if update_operations:
                 result = self.normalized_collection.bulk_write(update_operations)
-                print(f"Updated {result.modified_count} products in products_normalized")
+                print(f"Updated {result.modified_count} products in toys_normalized")
                 
             # 从 pending 表中删除已处理的项目
             if pending_deletions:
@@ -260,7 +260,7 @@ class TranslationService:
     def run(self):
         """运行翻译服务"""
         print("Starting Unified Translation Service...")
-        print("Processing translations for products_normalized collection")
+        print("Processing translations for toys_normalized collection")
         print(f"Check interval: {self.check_interval} seconds")
         print(f"Batch size: {self.batch_size}")
         print(f"Fields to translate: {self.fields_to_translate}")
@@ -328,7 +328,7 @@ def main():
         return
     
     print("Unified Translation Service Configuration:")
-    print(f"  Source: translation_pending -> products_normalized")
+    print(f"  Source: translation_pending -> toys_normalized")
     print(f"  Fields: {service.fields_to_translate}")
     print()
     

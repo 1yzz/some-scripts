@@ -106,7 +106,7 @@ show_help() {
     echo ""
     echo "说明:"
     echo "  统一翻译服务处理 translation_pending 队列中的数据"
-    echo "  翻译结果直接更新到 products_normalized 集合"
+    echo "  翻译结果直接更新到 toys_normalized 集合"
     echo "  翻译字段: name, description"
     echo ""
     echo "示例:"
@@ -182,7 +182,7 @@ echo "MongoDB DB: $MONGO_DB"
 if [ "$SHOW_STATS" = false ]; then
     echo "检查间隔: ${INTERVAL}秒"
     echo "处理队列: translation_pending"
-    echo "更新集合: products_normalized"
+    echo "更新集合: toys_normalized"
     echo "翻译字段: name, description"
 fi
 echo "========================================"

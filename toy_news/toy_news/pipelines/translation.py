@@ -6,7 +6,7 @@ class TranslationPipeline:
     """
     针对归一化数据进行翻译
     只处理包含product_hash的归一化数据
-    直接在 products_normalized 集合中添加翻译字段
+    直接在 toys_normalized 集合中添加翻译字段
     """
     def __init__(self, mongo_uri, mongo_db):
         self.mongo_uri = mongo_uri
@@ -30,7 +30,7 @@ class TranslationPipeline:
         self.db = self.client[self.mongo_db]
         
         # 归一化数据集合
-        self.normalized_collection = self.db['products_normalized']
+        self.normalized_collection = self.db['toys_normalized']
         self.pending_collection = self.db['translation_pending']
         
         # 创建索引
@@ -39,7 +39,7 @@ class TranslationPipeline:
         
         spider.logger.info(f"Translation pipeline initialized for normalized data")
         spider.logger.info(f"Fields to translate: {self.fields_to_translate}")
-        spider.logger.info(f"Translation results will be stored directly in products_normalized")
+        spider.logger.info(f"Translation results will be stored directly in toys_normalized")
 
     def close_spider(self, spider):
         # 显示待翻译队列状态

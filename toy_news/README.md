@@ -28,7 +28,7 @@
                            ▼                   ▼
                    ┌─────────────┐    ┌─────────────┐
                    │原始数据集合  │    │归一化数据    │
-                   │jump_cal_*   │    │products_    │
+                   │jump_cal_*   │    │toys_        │
                    │bsp_prize_*  │    │normalized   │
                    └─────────────┘    └─────────────┘
                                              │
@@ -52,7 +52,7 @@
                                              ▼
                                      ┌─────────────┐
                                      │翻译结果更新  │
-                                     │至normalized │
+                                     │至toys_      │
                                      └─────────────┘
 
 数据流向：
@@ -70,7 +70,7 @@ MongoDB Collections:
 │   └── ...                  # 其他原始数据集合
 │
 ├── 归一化数据层  
-│   └── products_normalized  # 统一商品数据结构
+│   └── toys_normalized  # 统一商品数据结构
 │       ├── product_hash     # 商品哈希ID (去重标识)
 │       ├── name            # 商品名称
 │       ├── description     # 商品描述  
@@ -229,7 +229,7 @@ Translation cache: 85 entries, 340 total uses
 db.translation_pending.find().limit(5)
 
 // 查看已翻译产品
-db.products_normalized.find({
+db.toys_normalized.find({
     "nameCN": {$exists: true}
 }).limit(5)
 
@@ -340,7 +340,7 @@ self.check_interval = 10  # 调整检查间隔
 
 ```javascript
 // 创建必要索引
-db.products_normalized.createIndex({product_hash: 1})
+db.toys_normalized.createIndex({product_hash: 1})
 db.translation_pending.createIndex({product_hash: 1})
 db.translation_cache.createIndex({text_hash: 1})
 ```
