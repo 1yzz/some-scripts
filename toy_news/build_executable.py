@@ -28,8 +28,8 @@ def build_executable():
     print("Building translation service executable...")
     print(f"Source: {source_script}")
     
-    # 获取项目根路径的jump_cal模块
-    jump_cal_path = os.path.join(os.getcwd(), "jump_cal")
+    # 获取项目根路径的toy_news模块
+    toy_news_path = os.path.join(os.getcwd(), "toy_news")
     
     # PyInstaller命令
     cmd = [
@@ -40,8 +40,8 @@ def build_executable():
         "--workpath=build",  # 临时文件目录
         "--specpath=build",  # spec文件目录
         "--console",  # 控制台应用
-        f"--add-data={jump_cal_path}{os.pathsep}jump_cal",  # 包含jump_cal模块
-        "--hidden-import=jump_cal.translators.deepseek_translator",  # 确保翻译器模块被包含
+        f"--add-data={toy_news_path}{os.pathsep}toy_news",  # 包含toy_news模块
+        "--hidden-import=toy_news.translators.deepseek_translator",  # 确保翻译器模块被包含
         "--hidden-import=pymongo",  # 确保pymongo被包含
         "--hidden-import=requests",  # 确保requests被包含
         "--hidden-import=openai",  # 确保openai被包含
@@ -85,47 +85,44 @@ def create_run_script():
     run_script_content = '''#!/bin/bash
 # Translation Service 运行脚本
 
-# 默认配置
-DEFAULT_CONFIG="jump_cal:goodsName,description;bsp_prize:title,content"
+# 默认配置 - 使用统一翻译架构
 DEFAULT_INTERVAL=10
-DEFAULT_MONGO_URI="127.0.0.1"
+DEFAULT_MONGO_URI="mongodb://localhost:27017/"
 DEFAULT_MONGO_DB="scrapy_items"
 
 # 显示帮助
 show_help() {
-    echo "Translation Service 可执行文件运行脚本"
+    echo "Unified Translation Service 可执行文件运行脚本"
     echo ""
     echo "用法:"
     echo "  $0 [选项]"
     echo ""
     echo "选项:"
-    echo "  -c, --config CONFIG      集合配置 (格式: collection1:field1,field2;collection2:field3)"
     echo "  -i, --interval SECONDS   检查间隔秒数 (默认: 10)"
-    echo "  -u, --mongo-uri URI      MongoDB URI (默认: 127.0.0.1)"
+    echo "  -u, --mongo-uri URI      MongoDB URI (默认: mongodb://localhost:27017/)"
     echo "  -d, --mongo-db DB        MongoDB 数据库名 (默认: scrapy_items)"
-    echo "  --show-cache             显示缓存统计并退出"
+    echo "  --show-stats             显示统计信息并退出"
     echo "  -h, --help               显示此帮助信息"
     echo ""
+    echo "说明:"
+    echo "  统一翻译服务处理 translation_pending 队列中的数据"
+    echo "  翻译结果直接更新到 products_normalized 集合"
+    echo "  翻译字段: name, description"
+    echo ""
     echo "示例:"
-    echo "  $0                                    # 使用默认配置运行"
-    echo "  $0 -c \"jump_cal:goodsName\"        # 只翻译jump_cal集合的goodsName字段"
-    echo "  $0 -i 30                              # 30秒检查间隔"
-    echo "  $0 --show-cache                       # 显示缓存统计"
+    echo "  $0                        # 使用默认配置运行"
+    echo "  $0 -i 30                  # 30秒检查间隔"
+    echo "  $0 --show-stats           # 显示统计信息"
 }
 
 # 解析参数
-CONFIG="$DEFAULT_CONFIG"
 INTERVAL="$DEFAULT_INTERVAL" 
 MONGO_URI="$DEFAULT_MONGO_URI"
 MONGO_DB="$DEFAULT_MONGO_DB"
-SHOW_CACHE=false
+SHOW_STATS=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
-        -c|--config)
-            CONFIG="$2"
-            shift 2
-            ;;
         -i|--interval)
             INTERVAL="$2"
             shift 2
@@ -138,8 +135,8 @@ while [[ $# -gt 0 ]]; do
             MONGO_DB="$2"
             shift 2
             ;;
-        --show-cache)
-            SHOW_CACHE=true
+        --show-stats)
+            SHOW_STATS=true
             shift
             ;;
         -h|--help)
@@ -171,25 +168,24 @@ ARGS=(
     "--mongo-db" "$MONGO_DB"
 )
 
-if [ "$SHOW_CACHE" = true ]; then
-    ARGS+=("--show-cache")
+if [ "$SHOW_STATS" = true ]; then
+    ARGS+=("--show-stats")
 else
-    ARGS+=(
-        "--config" "$CONFIG"
-        "--interval" "$INTERVAL"
-    )
+    ARGS+=("--interval" "$INTERVAL")
 fi
 
 # 显示配置信息
-echo "===== Translation Service ====="
+echo "===== Unified Translation Service ====="
 echo "可执行文件: $EXECUTABLE"
 echo "MongoDB URI: $MONGO_URI"
 echo "MongoDB DB: $MONGO_DB"
-if [ "$SHOW_CACHE" = false ]; then
-    echo "集合配置: $CONFIG"
+if [ "$SHOW_STATS" = false ]; then
     echo "检查间隔: ${INTERVAL}秒"
+    echo "处理队列: translation_pending"
+    echo "更新集合: products_normalized"
+    echo "翻译字段: name, description"
 fi
-echo "================================"
+echo "========================================"
 echo ""
 
 # 运行可执行文件
@@ -227,8 +223,8 @@ def main():
         print("")
         print("示例:")
         print("  ./dist/run_translation_service.sh")
-        print("  ./dist/run_translation_service.sh --show-cache")
-        print("  ./dist/run_translation_service.sh -c \"jump_cal_op:goodsName\" -i 30")
+        print("  ./dist/run_translation_service.sh --show-stats")
+        print("  ./dist/run_translation_service.sh -i 30")
         
     else:
         print("构建失败!")

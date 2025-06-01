@@ -12,13 +12,12 @@ class JumpcalSpider(scrapy.Spider):
 
     custom_settings = {
         'ITEM_PIPELINES': {
-            "jump_cal.pipelines.jump_cal.PurifyPipeline": 600,
-            "jump_cal.pipelines.jump_cal.JumpCalMongoPipeline": 700,
-            "jump_cal.pipelines.translation.TranslationPipeline": 800,
-            "jump_cal.pipelines.notify.NotifyPipeline": 900,
+            "toy_news.pipelines.jump_cal.PurifyPipeline": 600,
+            "toy_news.pipelines.jump_cal.JumpCalMongoPipeline": 700,
+            "toy_news.pipelines.normalization.DataNormalizationPipeline": 900,
+            "toy_news.pipelines.translation.TranslationPipeline": 950,
+            "toy_news.pipelines.notify.NotifyPipeline": 1000,
         },
-        'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'ROBOTSTXT_OBEY': True,
     }
 
     def start_requests(self):
@@ -26,13 +25,7 @@ class JumpcalSpider(scrapy.Spider):
             yield scrapy.Request(url=url, callback=self.parse)
 
     def parse(self, response):
-        # Collect all the linkes
-        # links = response.css(".newsMenu .acord .cat-item")
-        # logging.info(f"Found {len(links)} link(s) on page {response.url}")
-        #
-        # yield from response.follow_all(links, callback=self.parse_detail)
-        self.log("Start Crawling...")
-
+        self.log(f"[{self.name}] Start Crawling...")
         yield from self.parse_detail(response)
 
     def parse_detail(self, response):
@@ -62,7 +55,6 @@ class JumpcalSpider(scrapy.Spider):
 class JumpCalOPSpider(JumpcalSpider):
     name = 'jump_cal_op'
     ip = "ONEPIECE"
-    fields_to_translate = ['goodsName', 'description']
     start_urls = [
         'https://www.shonenjump.com/j/jumpcalendar/sakuhin/onepiece/'
     ]
@@ -70,7 +62,6 @@ class JumpCalOPSpider(JumpcalSpider):
 class JumpCalHunterSpider(JumpcalSpider):
     name = 'jump_cal_hunter'
     ip = "HUNTER"
-    fields_to_translate = ['goodsName', 'description']
     start_urls = [
         'https://www.shonenjump.com/j/jumpcalendar/sakuhin/hunter/'
     ]
@@ -78,7 +69,6 @@ class JumpCalHunterSpider(JumpcalSpider):
 class JumpCalNarutoSpider(JumpcalSpider):
     name = 'jump_cal_naruto'
     ip = "NARUTO"
-    fields_to_translate = ['goodsName', 'description']
     start_urls = [
         'https://www.shonenjump.com/j/jumpcalendar/sakuhin/naruto/'
     ]
@@ -86,7 +76,6 @@ class JumpCalNarutoSpider(JumpcalSpider):
 class JumpCalBleachSpider(JumpcalSpider):
     name = 'jump_cal_bleach'
     ip = "BLEACH"
-    fields_to_translate = ['goodsName', 'description']
     start_urls = [
         'https://www.shonenjump.com/j/jumpcalendar/sakuhin/bleach/'
     ]
@@ -94,7 +83,6 @@ class JumpCalBleachSpider(JumpcalSpider):
 class JumpCalDragonBallSpider(JumpcalSpider):
     name = 'jump_cal_dragonball'
     ip = "DRAGONBALL"
-    fields_to_translate = ['goodsName', 'description']
     start_urls = [
         'https://www.shonenjump.com/j/jumpcalendar/sakuhin/dragonball/'
     ]

@@ -39,7 +39,7 @@ class JumpCalMongoPipeline:
         mongo_collection = getattr(crawler.spider, 'collection_name', f'{spider_name}')
         return cls(
             mongo_uri=crawler.settings.get("MONGO_URI"),
-            mongo_db=crawler.settings.get("MONGO_DATABASE", "items"),
+            mongo_db=crawler.settings.get("MONGO_DATABASE", "scrapy_items"),
             mongo_collection=mongo_collection
         )
 
@@ -104,12 +104,11 @@ class JumpCalMongoPipeline:
                 update,
                 upsert=True
             )
-            spider.logger.info(f"result: {result}")
-
             new_data = self.collection.find_one(query)
             
-            item["_id"] = new_data["_id"]
-
+            adapter['_id'] = new_data['_id']
+            item['_id'] = new_data['_id']
+        
             spider.logger.info(f"Upserted item with name: {adapter['goodsName']}")
             # 如果更新了数据，则通知
 

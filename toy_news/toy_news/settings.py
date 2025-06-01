@@ -4,7 +4,7 @@ import logging
 # 全局禁用 pymongo 日志
 logging.getLogger('pymongo').setLevel(logging.WARNING)
 
-# Scrapy settings for jump_cal project
+# Scrapy settings for toy_news project
 #
 # For simplicity, this file contains only settings considered important or
 # commonly used. You can find more settings consulting the documentation:
@@ -13,10 +13,10 @@ logging.getLogger('pymongo').setLevel(logging.WARNING)
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
-BOT_NAME = "jump_cal"
+BOT_NAME = "toy_news"
 
-SPIDER_MODULES = ["jump_cal.spiders"]
-NEWSPIDER_MODULE = "jump_cal.spiders"
+SPIDER_MODULES = ["toy_news.spiders"]
+NEWSPIDER_MODULE = "toy_news.spiders"
 
 MONGO_URI="127.0.0.1"
 MONGO_DATABASE="scrapy_items"
@@ -40,7 +40,7 @@ COS_CDN_DOMAIN = config('COS_CDN_DOMAIN')
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
 # Obey robots.txt rules
-# ROBOTSTXT_OBEY = True
+ROBOTSTXT_OBEY = True
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32
@@ -68,16 +68,16 @@ DOWNLOAD_DELAY = 3
 # Enable or disable spider middlewares
 # See https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 #SPIDER_MIDDLEWARES = {
-#    "jump_cal.middlewares.JumpCalSpiderMiddleware": 543,
+#    "toy_news.middlewares.ToyNewsSpiderMiddleware": 543,
 #}
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
-   "jump_cal.middlewares.JumpCalDownloaderMiddleware": 543,
+   "toy_news.middlewares.ToyNewsDownloaderMiddleware": 543,
 }
 
-# Enable or disable extensions
+# Enable and configure extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
 #EXTENSIONS = {
 #    "scrapy.extensions.telnet.TelnetConsole": None,
