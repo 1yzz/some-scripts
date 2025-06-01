@@ -6,7 +6,7 @@ class TranslationPipeline:
     """
     针对归一化数据进行翻译
     只处理包含product_hash的归一化数据
-    直接在 toys_normalized 集合中添加翻译字段
+    只添加到翻译队列，不修改原始item
     """
     def __init__(self, mongo_uri, mongo_db, mongo_collection):
         self.mongo_uri = mongo_uri
@@ -41,7 +41,7 @@ class TranslationPipeline:
         
         spider.logger.info(f"Translation pipeline initialized for normalized data")
         spider.logger.info(f"Fields to translate: {self.fields_to_translate}")
-        spider.logger.info(f"Translation results will be stored directly in {self.mongo_collection}")
+        spider.logger.info(f"Translation queue: toys_translation_pending")
 
     def close_spider(self, spider):
         # 显示待翻译队列状态
@@ -61,7 +61,7 @@ class TranslationPipeline:
             # 不是归一化数据，直接返回
             return item
             
-        spider.logger.debug(f"Processing translation for product: {product_hash}")
+        spider.logger.debug(f"Processing translation queue for product: {product_hash}")
         
         # 检查归一化数据是否已经有翻译
         normalized_doc = self.normalized_collection.find_one({'product_hash': product_hash})
@@ -73,8 +73,7 @@ class TranslationPipeline:
             for field in self.fields_to_translate:
                 translated_field = f'{field}CN'
                 if translated_field in normalized_doc and normalized_doc[translated_field]:
-                    # 已翻译的字段，添加到 item 中
-                    adapter[translated_field] = normalized_doc[translated_field]
+                    # 已翻译的字段
                     translated_fields.append(field)
                 else:
                     # 未翻译的字段
@@ -85,7 +84,7 @@ class TranslationPipeline:
                 spider.logger.debug(f"Found existing translations for {product_hash}: {translated_fields}")
             
             if not untranslated_fields:
-                # 所有字段都已翻译，直接返回
+                # 所有字段都已翻译，直接返回原始item（不修改）
                 spider.logger.debug(f"All fields already translated for: {product_hash}")
                 return item
             else:
@@ -98,6 +97,7 @@ class TranslationPipeline:
             if untranslated_fields:
                 self._add_to_translation_queue(adapter, spider, untranslated_fields)
         
+        # 返回原始item，不添加翻译字段
         return item
         
     def _add_to_translation_queue(self, adapter, spider, fields_to_translate=None):
