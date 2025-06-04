@@ -30,9 +30,12 @@ class ProductItem(BaseItem):
     
     # 媒体文件
     images = scrapy.Field()          # 图片URL列表
+    cdn_keys = scrapy.Field()        # 文件CDN key
     
     # 原始数据引用
     raw_data_id = scrapy.Field()     # 原始数据的引用ID
+
+
 
 
 class JumpCalItem(BaseItem):
@@ -54,7 +57,7 @@ class BspPrizeItem(BaseItem):
     desc = scrapy.Field()
     characters = scrapy.Field()
     file_urls = scrapy.Field()
-    files = scrapy.Field()           # 兼容现有pipeline
+    files = scrapy.Field()          # 兼容现有pipeline
 
 
 class DataMapper:
@@ -106,7 +109,8 @@ class DataMapper:
         product['release_date'] = raw_item.get('releaseDate')
         product['manufacturer'] = 'Banpresto'
         product['images'] = raw_item.get('gallery', [])
+        product['cdn_keys'] = raw_item.get('cdn_keys', [])
         product['product_hash'] = product['spider_name'] + '_' + DataMapper._generate_hash(f"{product['name']}|{product['url']}")
-        
+
         return product
 

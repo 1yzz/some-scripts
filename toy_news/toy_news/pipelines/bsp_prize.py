@@ -32,10 +32,12 @@ class BspMongoPipeline:
 
     @classmethod
     def from_crawler(cls, crawler):
+        spider_name = crawler.spider.name
+        mongo_collection = getattr(crawler.spider, 'collection_name', f'{spider_name}')
         return cls(
             mongo_uri=crawler.settings.get("MONGO_URI"),
-            mongo_db=crawler.settings.get("MONGO_DATABASE", "items"),
-            mongo_collection="bsp_prize_op"
+            mongo_db=crawler.settings.get("MONGO_DATABASE", "scrapy_items"),
+            mongo_collection=mongo_collection
         )
 
     def open_spider(self, spider):
@@ -106,15 +108,13 @@ class BspMongoPipeline:
                 update,
                 upsert=True
             )
+            new_data = self.collection.find_one(query)
+            
+            adapter['_id'] = new_data['_id']
+            item['_id'] = new_data['_id']
+        
             spider.logger.info(f"Upserted item with name: {adapter['url']}")
-
-            if not old_data:
-                wecom_nofity_image_text(
-                    title=adapter["title"],
-                    description=textwrap.dedent(self._format_message(adapter)),
-                    image_url=adapter["thumbs"][0] if adapter["thumbs"] else "",
-                    url=adapter["url"],                
-                )
+                
 
         except pymongo.errors.DuplicateKeyError:
             spider.logger.warning(f"Duplicate name found: {adapter['url']}")

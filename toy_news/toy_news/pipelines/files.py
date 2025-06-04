@@ -10,14 +10,15 @@ from urllib.parse import urljoin, urlparse, quote
 import requests
 from twisted.internet import defer
 
-class JumpCalFilesPipeline:
+class UploadToCOSPipeline:
     def __init__(self, *args, **kwargs):
         settings = get_project_settings()
         self.cos_client = self._init_cos_client(settings)
         self.bucket = settings.get('COS_BUCKET')
         self.region = settings.get('COS_REGION')
         self.files_store = settings.get('FILES_STORE')
-        
+        self.spider_name = ''
+
         # Log COS configuration
         print("="*50)
         print("COS Configuration:")
@@ -37,9 +38,12 @@ class JumpCalFilesPipeline:
         config = CosConfig(Region=region, SecretId=secret_id, SecretKey=secret_key)
         return CosS3Client(config)
 
+    def open_spider(self, spider):
+        self.spider_name = spider.name
+
     def file_path(self, url, item):
         filename = os.path.basename(urlparse(url).path)
-        path = f"jump_cal/{item.get('ip')}/{item.get('title')}/{filename}"
+        path = f"toy_news/{self.spider_name}/{item.get('ip')}/{item.get('title')}/{filename}"
         return path.lstrip('/')  # Remove leading slash
     
     def process_item(self, item, spider):
@@ -169,7 +173,7 @@ class JumpCalFilesPipeline:
         files_store = spider.crawler.spider.settings.get('FILES_STORE')
         if not files_store:
             raise ValueError("FILES_STORE setting must be defined")
-        return os.path.join(files_store, 'jump_cal', item.get('ip'), item.get("title"), filename)
+        return os.path.join(files_store, 'toy_news', self.spider_name, item.get('ip'), item.get("title"), filename)
 
     def get_media_requests(self, item, info):
         for image_url in item['file_urls']:

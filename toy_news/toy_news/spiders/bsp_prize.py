@@ -5,12 +5,16 @@ class BspPrizeSpider(scrapy.Spider):
     name = "bsp_prize"
     domain = "https://bsp-prize.jp"
     ip = "BSP"
+    collection_name = "bsp_prize"
     start_urls = []
 
     custom_settings = {
         'ITEM_PIPELINES': {
-            "jump_cal.pipelines.files.JumpCalFilesPipeline": 600,
-            "jump_cal.pipelines.bsp_prize.BspMongoPipeline": 700,
+            "toy_news.pipelines.files.UploadToCOSPipeline": 600,
+            "toy_news.pipelines.bsp_prize.BspMongoPipeline": 700,
+            "toy_news.pipelines.normalization.DataNormalizationPipeline": 900,
+            "toy_news.pipelines.translation.TranslationPipeline": 950,
+            "toy_news.pipelines.notify.NotifyPipeline": 1000,
         },
     }        
 
@@ -58,5 +62,5 @@ class BspPrizeOPAllSpider(BspPrizeSpider):
     name = 'bsp_prize_op_all'
     ip = "ONEPIECE"
     start_urls = [
-        f"https://bsp-prize.jp/search/?ref=title&title=IP00002025&page={index}"  for index in range(2, 21)
+        f"https://bsp-prize.jp/search/?ref=title&title=IP00002025&page={index}"  for index in range(2, 23)
     ]   
