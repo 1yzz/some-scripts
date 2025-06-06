@@ -47,18 +47,7 @@ class RateLimiter:
 rate_limiter = RateLimiter(max_tokens=20, refill_rate=1/3)
 
 
-def notify_all(title, content, is_important=False):
-    """统一通知入口"""
-    wecom_msg = f"【{title}】\n{content}"
-    wecom_notify(wecom_msg)
-    # if is_important:
-    #     email_notify(
-    #         subject=f"重要更新：{title}",
-    #         body=content
-    #     )
-
-
-def wecom_notify(text):
+def wecom_notify_text(text):
     """
     企业微信推送
     """

@@ -112,10 +112,9 @@ class BspMongoPipeline:
             
             adapter['_id'] = new_data['_id']
             item['_id'] = new_data['_id']
-        
+
             spider.logger.info(f"Upserted item with name: {adapter['url']}")
                 
-
         except pymongo.errors.DuplicateKeyError:
             spider.logger.warning(f"Duplicate name found: {adapter['url']}")
         except Exception as e:

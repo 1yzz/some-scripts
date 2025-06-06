@@ -1,30 +1,49 @@
 from datetime import datetime
-from ..notify import notify_all
+from ..notify import wecom_notify_text, wecom_nofity_image_text
+from itemadapter import ItemAdapter
 
 class NotifyPipeline:
     def _format_message(self, item):
         """格式化通知内容"""
         return f"""
-        商品名称: {item['goodsName']}
+        商品名称: {item['name']}
         发售时间: {item.get('releaseDate')}
-        价格: {item.get('genre')}
-        系列: {item.get('price')}
-        厂商: {item.get('maker')}
+        价格: {item.get('price')}
+        系列: {item.get('category')}
+        厂商: {item.get('manufacturer')}
         更新时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         """
 
     def process_item(self, item, spider):
-        if not item.get("notify"):  
+        adapter = ItemAdapter(item)
+        item_id = adapter.get('_id')
+        
+        # 从 spider.notify_meta 获取通知数据
+        notify_data = getattr(spider, 'notify_meta', {}).get(item_id)
+
+        if not notify_data or not notify_data.get('enable'):
             return item
         
-        try:
-            title = "新增数据" if item.get("Add") else "更新数据"
+        if notify_data.get('isNew'):
+            title = "新增数据"
+        else:
+            title = "更新数据"
 
-            # 发送通知
-            notify_all(
-                title=title,
-                content=self._format_message(item),
-            )
+        try:
+            if notify_data.get('type') == 'image_text':
+                # 发送图片和文字通知
+                wecom_nofity_image_text(
+                    title=title,
+                    description=self._format_message(item),
+                    image_url=item.get('images')[0],
+                    url=item.get('url'),
+                )
+            else:
+                # 默认发送文字通知
+                wecom_notify_text(
+                    title=title,
+                    content=self._format_message(item),
+                )
                     
             spider.logger.info(f"Notification sent: {title}")
         except Exception as e:

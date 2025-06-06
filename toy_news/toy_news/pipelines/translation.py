@@ -53,6 +53,9 @@ class TranslationPipeline:
             self.client.close()
 
     def process_item(self, item, spider):
+        if not item:
+            return None
+        
         adapter = ItemAdapter(item)
         
         # 只处理归一化数据（通过product_hash判断）

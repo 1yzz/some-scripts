@@ -89,14 +89,19 @@ class DataNormalizationPipeline:
                     }
                 }
                 
-                # 使用 upsert 避免重复
-                self.normalized_collection.update_one(
-                    {'raw_data_id': normalized_data['raw_data_id']},
-                    update_doc,
-                    upsert=True
-                )
-
-                spider.logger.info(f"Normalized product: {normalized_data['raw_data_id']} {normalized_data['name']}")
+                try:
+                    # 使用 upsert 避免重复
+                    result = self.normalized_collection.update_one(
+                        {'raw_data_id': normalized_data['raw_data_id']},
+                        update_doc,
+                        upsert=True
+                    )
+                    spider.logger.info(f"Normalized product: {normalized_data['raw_data_id']} {normalized_data['name']}")   
+                except pymongo.errors.DuplicateKeyError:
+                    # If we get a duplicate key error, log it and return the original item
+                    spider.logger.warning(f"Duplicate product found: {normalized_data['raw_data_id']} {normalized_data['name']}")
+                    return item
+                
                 return normalized_item
                 
         except Exception as e:

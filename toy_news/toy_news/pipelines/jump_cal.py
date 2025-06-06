@@ -6,7 +6,6 @@ import re
 from itemadapter import ItemAdapter
 import pymongo
 from datetime import datetime
-from ..notify import notify_all
 
 class PurifyPipeline:
     """
@@ -110,21 +109,9 @@ class JumpCalMongoPipeline:
             item['_id'] = new_data['_id']
         
             spider.logger.info(f"Upserted item with name: {adapter['goodsName']}")
-            # 如果更新了数据，则通知
-
-            if result.modified_count > 0 and \
-                    (old_data["price"] != adapter['price']
-                     or old_data['releaseDate'] != adapter['releaseDate']):  # 更新操作
-                
-                item["notify"] = True
-            elif not old_data:
-                item["notify"] = True
-                item['Add'] = True
-
         except pymongo.errors.DuplicateKeyError:
             spider.logger.warning(f"Duplicate name found: {adapter['goodsName']}")
         except Exception as e:
             spider.logger.error(f"Error processing item: {e}")
-
 
         return item
