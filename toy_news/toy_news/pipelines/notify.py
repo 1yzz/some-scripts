@@ -16,7 +16,7 @@ class NotifyPipeline:
 
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
-        item_id = adapter.get('_id')
+        item_id = adapter.get('product_hash')
         
         # 从 spider.notify_meta 获取通知数据
         notify_data = getattr(spider, 'notify_meta', {}).get(item_id)

@@ -47,7 +47,7 @@ class RateLimiter:
 rate_limiter = RateLimiter(max_tokens=20, refill_rate=1/3)
 
 
-def wecom_notify_text(text):
+def wecom_notify_text(title, content):
     """
     企业微信推送
     """
@@ -62,7 +62,7 @@ def wecom_notify_text(text):
     payload = {
         "msgtype": "text",
         "text": {
-            "content": text,
+            "content": f"{title}\n{content}",
             "mentioned_mobile_list": ["@all"]
         }
     }

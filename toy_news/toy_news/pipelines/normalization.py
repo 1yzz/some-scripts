@@ -97,9 +97,24 @@ class DataNormalizationPipeline:
                         upsert=True
                     )
                     spider.logger.info(f"Normalized product: {normalized_data['raw_data_id']} {normalized_data['name']}")   
+                    
+                    # 判断是否为新增数据
+                    is_new = result.upserted_id is not None
+                
+                    # 将判断结果添加到 spider 的 notify_meta 中
+                    if not hasattr(spider, 'notify_meta'):
+                        spider.notify_meta = {}
+                    
+                    spider.notify_meta[normalized_data['product_hash']] = {
+                        'enable': is_new,
+                        'isNew': is_new,
+                        'type': 'image_text' if normalized_data.get('images') else 'text'
+                    }
+                    spider.logger.info(f"Notify meta: {spider.notify_meta[normalized_data['product_hash']]}")
+
                 except pymongo.errors.DuplicateKeyError:
                     # If we get a duplicate key error, log it and return the original item
-                    spider.logger.warning(f"Duplicate product found: {normalized_data['raw_data_id']} {normalized_data['name']}")
+                    spider.logger.warning(f"Duplicate product found: {normalized_data['product_hash']} {normalized_data['name']}")
                     return item
                 
                 return normalized_item
