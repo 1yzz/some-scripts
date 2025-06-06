@@ -49,4 +49,10 @@ class NotifyPipeline:
         except Exception as e:
             spider.logger.error(f"Error sending notification: {e}")
 
+        try:
+            # TODO: 发送消息到grpc
+            pass
+        except Exception as e:
+            spider.logger.error(f"Error sending grpc notification: {e}")
+
         return item
