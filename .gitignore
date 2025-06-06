@@ -175,3 +175,7 @@ cython_debug/
 node_modules/
 .idea
 .vscode/settings.json
+
+translation_service
+translation_service.exe
+translation_service_linux*

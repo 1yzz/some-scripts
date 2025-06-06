@@ -11,6 +11,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"regexp"
@@ -795,8 +796,29 @@ func main() {
 	)
 	flag.Parse()
 
+	// URL encode the MongoDB URI if it contains special characters
+	encodedURI := *mongoURI
+	if strings.Contains(encodedURI, "://") {
+		parts := strings.SplitN(encodedURI, "://", 2)
+		if len(parts) == 2 {
+			// Encode the userinfo part (username:password)
+			userinfo := strings.SplitN(parts[1], "@", 2)
+			if len(userinfo) == 2 {
+				// Split username and password
+				auth := strings.SplitN(userinfo[0], ":", 2)
+				if len(auth) == 2 {
+					// Encode username and password separately
+					username := url.QueryEscape(auth[0])
+					password := url.QueryEscape(auth[1])
+					encodedUserinfo := username + ":" + password
+					encodedURI = parts[0] + "://" + encodedUserinfo + "@" + userinfo[1]
+				}
+			}
+		}
+	}
+
 	// Create service instance
-	service := NewTranslationService(*mongoURI, *mongoDB, *mongoCollection, *interval)
+	service := NewTranslationService(encodedURI, *mongoDB, *mongoCollection, *interval)
 
 	ctx := context.Background()
 
