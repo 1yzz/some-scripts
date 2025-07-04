@@ -785,8 +785,52 @@ func (ts *TranslationService) Run(ctx context.Context) error {
 	return nil
 }
 
+// encodeMongoURI properly encodes MongoDB URI with special characters
+func encodeMongoURI(uri string) string {
+	// If URI doesn't contain authentication, return as is
+	if !strings.Contains(uri, "@") {
+		return uri
+	}
+
+	// Split the URI into parts
+	parts := strings.SplitN(uri, "://", 2)
+	if len(parts) != 2 {
+		return uri
+	}
+
+	scheme := parts[0]
+	rest := parts[1]
+
+	// Split userinfo and host parts
+	userinfoParts := strings.SplitN(rest, "@", 2)
+	if len(userinfoParts) != 2 {
+		return uri
+	}
+
+	userinfo := userinfoParts[0]
+	hostPart := userinfoParts[1]
+
+	// Split username and password
+	authParts := strings.SplitN(userinfo, ":", 2)
+	if len(authParts) != 2 {
+		return uri
+	}
+
+	username := authParts[0]
+	password := authParts[1]
+
+	// Encode username and password using proper URL encoding
+	encodedUsername := url.QueryEscape(username)
+	encodedPassword := url.QueryEscape(password)
+
+	// Reconstruct the URI
+	encodedUserinfo := encodedUsername + ":" + encodedPassword
+	return scheme + "://" + encodedUserinfo + "@" + hostPart
+}
+
 func main() {
 	// Command line flags
+	// usage: go run translation_service.go -mongo-uri "mongodb://localhost:27017/" -mongo-db "scrapy_items" -mongo-collection "toys_normalized" -show-stats
 	var (
 		interval        = flag.Int("interval", 10, "Check interval in seconds")
 		mongoURI        = flag.String("mongo-uri", "mongodb://localhost:27017/", "MongoDB URI")
@@ -796,26 +840,8 @@ func main() {
 	)
 	flag.Parse()
 
-	// URL encode the MongoDB URI if it contains special characters
-	encodedURI := *mongoURI
-	if strings.Contains(encodedURI, "://") {
-		parts := strings.SplitN(encodedURI, "://", 2)
-		if len(parts) == 2 {
-			// Encode the userinfo part (username:password)
-			userinfo := strings.SplitN(parts[1], "@", 2)
-			if len(userinfo) == 2 {
-				// Split username and password
-				auth := strings.SplitN(userinfo[0], ":", 2)
-				if len(auth) == 2 {
-					// Encode username and password separately
-					username := url.QueryEscape(auth[0])
-					password := url.QueryEscape(auth[1])
-					encodedUserinfo := username + ":" + password
-					encodedURI = parts[0] + "://" + encodedUserinfo + "@" + userinfo[1]
-				}
-			}
-		}
-	}
+	// Properly encode MongoDB URI with special characters
+	encodedURI := encodeMongoURI(*mongoURI)
 
 	// Create service instance
 	service := NewTranslationService(encodedURI, *mongoDB, *mongoCollection, *interval)

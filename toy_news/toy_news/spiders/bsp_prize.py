@@ -24,7 +24,8 @@ class BspPrizeSpider(scrapy.Spider):
 
     def parse(self, response):
         links = response.css('.products_list .products_item a')
-        for link in links:
+        # reverse the links
+        for link in reversed(links):
             yield response.follow(link, callback=self.parse_detail)
         
     def parse_detail(self, response):
@@ -62,5 +63,5 @@ class BspPrizeOPAllSpider(BspPrizeSpider):
     name = 'bsp_prize_op_all'
     ip = "ONEPIECE"
     start_urls = [
-        f"https://bsp-prize.jp/search/?ref=title&title=IP00002025&page={index}"  for index in range(2, 23)
+        f"https://bsp-prize.jp/search/?ref=title&title=IP00002025&page={index}"  for index in reversed(range(2, 23))
     ]   
