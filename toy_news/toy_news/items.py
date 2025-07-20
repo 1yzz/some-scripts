@@ -120,6 +120,7 @@ class DataMapper:
         product['release_date'] = raw_item.get('releaseDate')
         product['manufacturer'] = 'Banpresto'
         product['images'] = raw_item.get('gallery', [])
+        # 同步CDN_Keys
         product['cdn_keys'] = raw_item.get('cdn_keys', [])
         product['product_hash'] = product['spider_name'] + '_' + DataMapper._generate_hash(f"{product['name']}|{product['url']}")
 
@@ -144,6 +145,8 @@ class DataMapper:
         product['release_date'] = raw_item.get('releaseDate')
         product['manufacturer'] = 'Bandai'
         product['images'] = raw_item.get('gallery', [])
+        # 同步CDN_Keys
+        product['cdn_keys'] = raw_item.get('cdn_keys', [])
         product['product_hash'] = product['spider_name'] + '_' + DataMapper._generate_hash(f"{product['name']}|{product['url']}")
 
         return product
