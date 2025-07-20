@@ -60,6 +60,17 @@ class BspPrizeItem(BaseItem):
     files = scrapy.Field()          # 兼容现有pipeline
 
 
+
+class BandaiHobbyItem(BaseItem):
+    """Bandai Hobby数据Item"""
+    title = scrapy.Field()
+    releaseDate = scrapy.Field()
+    price = scrapy.Field()
+    desc = scrapy.Field()
+    gallery = scrapy.Field()
+    file_urls = scrapy.Field()
+
+
 class DataMapper:
     """数据映射器 - 将原始数据映射到归一化结构"""
     
@@ -114,3 +125,25 @@ class DataMapper:
 
         return product
 
+    @staticmethod
+    def map_bandai_hobby_to_product(raw_item):
+        """将Bandai Hobby数据映射到ProductItem"""
+        product = ProductItem()
+        
+        # 基础信息
+        product['source'] = 'bandai_hobby'
+        product['spider_name'] = raw_item.get('spider_name')
+        product['url'] = raw_item.get('url')
+        product['ip'] = raw_item.get('ip')
+        
+        # 商品信息映射
+        product['name'] = raw_item.get('title')
+        product['description'] = raw_item.get('desc', '')
+        product['price'] = raw_item.get('price')
+        product['category'] = 'Bandai Hobby'
+        product['release_date'] = raw_item.get('releaseDate')
+        product['manufacturer'] = 'Bandai'
+        product['images'] = raw_item.get('gallery', [])
+        product['product_hash'] = product['spider_name'] + '_' + DataMapper._generate_hash(f"{product['name']}|{product['url']}")
+
+        return product

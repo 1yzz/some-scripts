@@ -54,6 +54,8 @@ class DataNormalizationPipeline:
             return 'jump_cal'
         elif 'bsp_prize' in spider_name:
             return 'bsp_prize'
+        elif 'bandai_hobby' in spider_name:
+            return 'bandai_hobby'
         return 'unknown'
         
     def _normalize_and_save(self, item, spider):
@@ -67,6 +69,8 @@ class DataNormalizationPipeline:
                 normalized_item = DataMapper.map_jump_cal_to_product(adapter)
             elif source == 'bsp_prize':
                 normalized_item = DataMapper.map_bsp_prize_to_product(adapter)
+            elif source == 'bandai_hobby':
+                normalized_item = DataMapper.map_bandai_hobby_to_product(adapter)
             else:
                 return None
                 

@@ -9,6 +9,8 @@ from scrapy.utils.project import get_project_settings
 from urllib.parse import urljoin, urlparse, quote
 import requests
 from twisted.internet import defer
+import hashlib
+import re
 
 class UploadToCOSPipeline:
     def __init__(self, *args, **kwargs):
@@ -17,7 +19,12 @@ class UploadToCOSPipeline:
         self.bucket = settings.get('COS_BUCKET')
         self.region = settings.get('COS_REGION')
         self.files_store = settings.get('FILES_STORE')
+        self.cos_prefix = settings.get('COS_PREFIX')
+        self.is_prod = settings.get('IS_PROD', False)
         self.spider_name = ''
+
+        if not self.is_prod:
+            self.cos_prefix = 'toy_news_dev'
 
         # Log COS configuration
         print("="*50)
@@ -41,9 +48,16 @@ class UploadToCOSPipeline:
     def open_spider(self, spider):
         self.spider_name = spider.name
 
+
+    def _get_title(self, item):
+        title = item.get('title', '')
+        # 1. replace spaces with _ by regex
+        # 2. replace / and \ with _
+        return re.sub(r'[\s/\\]', '_', title)
+
     def file_path(self, url, item):
         filename = os.path.basename(urlparse(url).path)
-        path = f"toy_news/{self.spider_name}/{item.get('ip')}/{item.get('title')}/{filename}"
+        path = f"{self.cos_prefix}/{self.spider_name}/{item.get('ip')}/{self._get_title(item)}/{filename}"
         return path.lstrip('/')  # Remove leading slash
     
     def process_item(self, item, spider):
@@ -76,7 +90,16 @@ class UploadToCOSPipeline:
             if not os.path.exists(local_path):
                 try:
                     spider.logger.info(f"Downloading file: {file_url}")
-                    response = requests.get(file_url, headers={'Referer': item['url']})
+                    headers = {
+                        'Referer': item['url'],
+                        'User-Agent': spider.settings.get('USER_AGENT'),
+                    }
+                    # handle bandai_hobby
+                    if 'bandai_hobby' in self.spider_name:
+                        headers['Referer'] = 'https://bandai-hobby.net/'
+                        file_url = self._sign_bandai_hobby_file_url(file_url)
+
+                    response = requests.get(file_url, headers=headers, timeout=60)
                     response.raise_for_status()
                     
                     with open(local_path, 'wb') as f:
@@ -167,17 +190,13 @@ class UploadToCOSPipeline:
         
         return item
 
-    def _get_file_path_from_url(self, url, item, spider):
-        """Helper function to construct the file path (mirrors file_path)."""
-        filename = url.split('/')[-1]
-        files_store = spider.crawler.spider.settings.get('FILES_STORE')
-        if not files_store:
-            raise ValueError("FILES_STORE setting must be defined")
-        return os.path.join(files_store, 'toy_news', self.spider_name, item.get('ip'), item.get("title"), filename)
-
-    def get_media_requests(self, item, info):
-        for image_url in item['file_urls']:
-            headers = {
-                'Referer': item["url"]
-            }
-            yield scrapy.Request(image_url, headers=headers) 
+    def _sign_bandai_hobby_file_url(self, url):
+        """
+        单独签名
+        e.g. https://assets-signedurl.bandai-hobby.net/get-signed-url?path=/hobby/jp/product/2025/06/IozvvkGT0E8kwrp5/f3xhSPJda8GRIDK2.jpg
+        """
+        # get the path
+        path = urlparse(url).path
+        # sign the path
+        signed_path = requests.get(f"https://assets-signedurl.bandai-hobby.net/get-signed-url?path={path}").json()['signedUrl']
+        return signed_path
