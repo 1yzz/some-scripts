@@ -10,26 +10,40 @@ class TranslationPipeline:
     只处理包含product_hash的归一化数据
     只添加到翻译队列，不修改原始item
     """
-    def __init__(self, mongo_uri, mongo_db, mongo_collection, redis_host, redis_port, redis_db, redis_translation_queue):
+    def __init__(self, mongo_uri, mongo_db, mongo_collection, redis_host, redis_password, redis_port, redis_db, redis_translation_queue):
         self.mongo_uri = mongo_uri
         self.mongo_db = mongo_db
         self.mongo_collection = mongo_collection
         self.client = None
         self.db = None
         self.translation_queue = redis_translation_queue
-        self.redis_client = redis.Redis(host=redis_host, port=redis_port, db=redis_db)
+        self.redis_client = redis.Redis(host=redis_host, port=redis_port, db=redis_db, password=redis_password)
         # 归一化数据的标准翻译字段
         self.fields_to_translate = ['name', 'description']
 
     @classmethod
     def from_crawler(cls, crawler):
+        # 获取 Redis 配置
+        redis_host = crawler.settings.get('REDIS_HOST', 'localhost')
+        redis_password = crawler.settings.get('REDIS_PWD', '')
+        redis_port = crawler.settings.get('REDIS_PORT', 6379)
+        redis_db = crawler.settings.get('REDIS_DB', 0)
+        
+        # 调试信息
+        print(f"TranslationPipeline Redis config:")
+        print(f"  Host: {redis_host}")
+        print(f"  Port: {redis_port}")
+        print(f"  DB: {redis_db}")
+        print(f"  Password configured: {'Yes' if redis_password else 'No'}")
+        
         return cls(
             mongo_uri=crawler.settings.get('MONGO_URI', 'mongodb://localhost:27017/'),
             mongo_db=crawler.settings.get('MONGO_DATABASE', 'scrapy_items'),
             mongo_collection=crawler.settings.get('MONGO_COLLECTION', 'toys_normalized'),
-            redis_host=crawler.settings.get('REDIS_HOST', 'localhost'),
-            redis_port=crawler.settings.get('REDIS_PORT', 6379),
-            redis_db=crawler.settings.get('REDIS_DB', 0),
+            redis_host=redis_host,
+            redis_password=redis_password,
+            redis_port=redis_port,
+            redis_db=redis_db,
             redis_translation_queue=crawler.settings.get('TRANSLATION_QUEUE', 'toys:translation:pending'),
         )
 
@@ -45,6 +59,17 @@ class TranslationPipeline:
         # 创建索引
         self.normalized_collection.create_index('product_hash', unique=True)
         # self.pending_collection.create_index('product_hash', unique=True)
+        
+        # 测试 Redis 连接
+        try:
+            self.redis_client.ping()
+            spider.logger.info(f"Redis connection successful")
+        except Exception as e:
+            spider.logger.error(f"Redis connection failed: {e}")
+            spider.logger.error(f"Redis config - Host: {self.redis_client.connection_pool.connection_kwargs.get('host')}, "
+                              f"Port: {self.redis_client.connection_pool.connection_kwargs.get('port')}, "
+                              f"DB: {self.redis_client.connection_pool.connection_kwargs.get('db')}, "
+                              f"Password configured: {'Yes' if self.redis_client.connection_pool.connection_kwargs.get('password') else 'No'}")
         
         spider.logger.info(f"Translation pipeline initialized for normalized data")
         spider.logger.info(f"Fields to translate: {self.fields_to_translate}")

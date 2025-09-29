@@ -1,5 +1,6 @@
 from decouple import config
 import logging
+import os
 
 # 全局禁用 pymongo 日志
 logging.getLogger('pymongo').setLevel(logging.WARNING)
@@ -23,19 +24,26 @@ MONGO_DATABASE="scrapy_items"
 
 # settings.py
 # 企业微信机器人配置
-WECOM_WEBHOOK = config('WECOM_WEBHOOK')
+WECOM_WEBHOOK = config('WECOM_WEBHOOK', default='')
 WECOM_NOTIFY_ENABLED = True
 
 # File storage configuration
 FILES_STORE = "/var/data/scrapy_files"
 
 # Tencent COS Configuration
-COS_SECRET_ID = config('COS_SECRET_ID')  # Get from environment variable
-COS_SECRET_KEY = config('COS_SECRET_KEY')  # Get from environment variable
+COS_SECRET_ID = config('COS_SECRET_ID', default='')  # Get from environment variable
+COS_SECRET_KEY = config('COS_SECRET_KEY', default='')  # Get from environment variable
 COS_REGION = config('COS_REGION', default='ap-shanghai')
-COS_BUCKET = config('COS_BUCKET')
-COS_CDN_DOMAIN = config('COS_CDN_DOMAIN')
+COS_BUCKET = config('COS_BUCKET', default='')
+COS_CDN_DOMAIN = config('COS_CDN_DOMAIN', default='')
 COS_PREFIX = config('COS_PREFIX', default='toy_news')
+
+# Redis Configuration
+REDIS_HOST = config('REDIS_HOST', default='localhost')
+REDIS_PWD = os.environ.get('REDIS_PWD', '') 
+REDIS_PORT = config('REDIS_PORT', default=6379, cast=int)
+REDIS_DB = config('REDIS_DB', default=0, cast=int)
+TRANSLATION_QUEUE = config('TRANSLATION_QUEUE', default='toys:translation:pending')
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 
