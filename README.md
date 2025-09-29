@@ -20,5 +20,5 @@ scrapy crawl bsp_item_1
 scrapy crawl bsp_item_all -O build/bsp_item_all.json
 
 # 部署到scrapyd
-scrapyd-deploy
+scrapyd-deploy 
 ```

@@ -1,20 +1,23 @@
 from itemadapter import ItemAdapter
 import pymongo
 from datetime import datetime
-
+import json
+import redis
+import uuid
 class TranslationPipeline:
     """
     针对归一化数据进行翻译
     只处理包含product_hash的归一化数据
     只添加到翻译队列，不修改原始item
     """
-    def __init__(self, mongo_uri, mongo_db, mongo_collection):
+    def __init__(self, mongo_uri, mongo_db, mongo_collection, redis_host, redis_port, redis_db, redis_translation_queue):
         self.mongo_uri = mongo_uri
         self.mongo_db = mongo_db
         self.mongo_collection = mongo_collection
         self.client = None
         self.db = None
-        
+        self.translation_queue = redis_translation_queue
+        self.redis_client = redis.Redis(host=redis_host, port=redis_port, db=redis_db)
         # 归一化数据的标准翻译字段
         self.fields_to_translate = ['name', 'description']
 
@@ -24,6 +27,10 @@ class TranslationPipeline:
             mongo_uri=crawler.settings.get('MONGO_URI', 'mongodb://localhost:27017/'),
             mongo_db=crawler.settings.get('MONGO_DATABASE', 'scrapy_items'),
             mongo_collection=crawler.settings.get('MONGO_COLLECTION', 'toys_normalized'),
+            redis_host=crawler.settings.get('REDIS_HOST', 'localhost'),
+            redis_port=crawler.settings.get('REDIS_PORT', 6379),
+            redis_db=crawler.settings.get('REDIS_DB', 0),
+            redis_translation_queue=crawler.settings.get('TRANSLATION_QUEUE', 'toys:translation:pending'),
         )
 
     def open_spider(self, spider):
@@ -33,19 +40,19 @@ class TranslationPipeline:
         
         # 归一化数据集合
         self.normalized_collection = self.db[self.mongo_collection]
-        self.pending_collection = self.db['toys_translation_pending']
+        # self.pending_collection = self.db['toys_translation_pending']
         
         # 创建索引
         self.normalized_collection.create_index('product_hash', unique=True)
-        self.pending_collection.create_index('product_hash', unique=True)
+        # self.pending_collection.create_index('product_hash', unique=True)
         
         spider.logger.info(f"Translation pipeline initialized for normalized data")
         spider.logger.info(f"Fields to translate: {self.fields_to_translate}")
-        spider.logger.info(f"Translation queue: toys_translation_pending")
+        spider.logger.info(f"Translation queue: {self.translation_queue}")
 
     def close_spider(self, spider):
         # 显示待翻译队列状态
-        pending_count = self.pending_collection.count_documents({})
+        pending_count = self.redis_client.llen(self.translation_queue)
         if pending_count > 0:
             spider.logger.info(f"Spider closed with {pending_count} items in translation queue")
         
@@ -124,20 +131,38 @@ class TranslationPipeline:
             if not translation_fields:
                 return
             
-            # 插入到待翻译队列（如果不存在）
-            self.pending_collection.update_one(
-                {'product_hash': adapter.get('product_hash')},
-                {
-                    '$setOnInsert': {
-                        'createdAt': datetime.now()
-                    },
-                    '$set': {
-                        **metadata,
-                        **translation_fields
-                    },
+            # # 插入到待翻译队列（如果不存在）
+            # self.pending_collection.update_one(
+            #     {'product_hash': adapter.get('product_hash')},
+            #     {
+            #         '$setOnInsert': {
+            #             'createdAt': datetime.now()
+            #         },
+            #         '$set': {
+            #             **metadata,
+            #             **translation_fields
+            #         },
+            #     },
+            #     upsert=True
+            # )
+
+            # 构建符合Go Message结构的消息格式
+            queue_message = {
+                "id": str(uuid.uuid4()),
+                "type": "translation",
+                "payload": {
+                    "_id": adapter.get('_id'),
+                    "created_at": datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    **metadata,
+                    **translation_fields,
                 },
-                upsert=True
-            )
+                "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "attempts": 0,
+                "max_retries": 5
+            }
+            
+            # 插入到待redis中的翻译队列
+            self.redis_client.lpush(self.translation_queue, json.dumps(queue_message))
             
             spider.logger.debug(f"Added to translation queue: {adapter.get('product_hash')} (fields: {fields_to_translate})")
             

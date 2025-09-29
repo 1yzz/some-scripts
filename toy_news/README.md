@@ -127,6 +127,63 @@ python scripts/translation_service.py --show-stats
 python scripts/translation_service.py --interval 30
 ```
 
+## 🚀 部署
+
+### Scrapyd 部署
+
+项目支持通过 Scrapyd 进行分布式部署，配置文件 `scrapy.cfg` 中定义了三个环境：
+
+#### 安装部署工具
+
+```bash
+# 安装 scrapyd-client
+pip install scrapyd-client
+```
+
+#### 部署环境
+
+**本地环境 (推荐开发使用)**
+```bash
+# 部署到本地 Scrapyd 服务
+scrapyd-deploy local
+
+# 启动本地 Scrapyd 服务 (如果未运行)
+scrapyd
+```
+
+**测试环境**
+```bash
+# 部署到测试服务器
+scrapyd-deploy dev
+```
+
+**生产环境**
+```bash
+# 部署到生产服务器  
+scrapyd-deploy prd
+```
+
+#### 部署后运行爬虫
+
+```bash
+# 通过 Scrapyd API 启动爬虫
+curl http://localhost:6800/schedule.json -d project=toy_news_dev -d spider=jump_cal_op
+
+# 查看爬虫状态
+curl http://localhost:6800/listjobs.json?project=toy_news_dev
+
+# 停止爬虫
+curl http://localhost:6800/cancel.json -d project=toy_news_dev -d job=<job_id>
+```
+
+#### 环境配置说明
+
+| 环境 | 服务器地址 | 项目名称 | 用途 |
+|------|------------|----------|------|
+| local | http://localhost:6800/ | toy_news_dev | 本地开发测试 |
+| dev | http://192.168.5.122:6800/ | toy_news_test | 测试环境 |
+| prd | http://192.168.5.122:6800/ | toy_news | 生产环境 |
+
 ## 📋 Pipeline 配置
 
 系统使用分层 Pipeline 架构：
