@@ -16,7 +16,7 @@ class JumpcalSpider(scrapy.Spider):
             "toy_news.pipelines.jump_cal.JumpCalMongoPipeline": 700,
             "toy_news.pipelines.normalization.DataNormalizationPipeline": 900,
             "toy_news.pipelines.translation.TranslationPipeline": 950,
-            "toy_news.pipelines.notify.NotifyPipeline": 1000,
+            # "toy_news.pipelines.notify.NotifyPipeline": 1000,
         },
     }
 
