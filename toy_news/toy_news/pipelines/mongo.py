@@ -4,23 +4,7 @@ from itemadapter import ItemAdapter
 import pymongo
 from datetime import datetime
 
-# class PurifyPipeline:
-#     """
-#     处理一些数据, 比如发售日期
-#     """
-#     def add_year_if_missing(self, text):
-#         # 如果字符串不以4位数字开头（简单检查）
-#         if not text[:4].isdigit():
-#             current_year = datetime.now().year
-#             return f"{current_year}年{text}"
-#         return text
-
-#     def process_item(self, item, spider):
-#         adapter = ItemAdapter(item)
-#         adapter["releaseDate"] = self.add_year_if_missing(adapter["releaseDate"])
-#         return item
-
-class BspMongoPipeline:
+class MongoDBPipeline:
     """
     存储到db
     """
@@ -74,14 +58,6 @@ class BspMongoPipeline:
 
     def close_spider(self, spider):
         self.client.close()
-
-
-    def _format_message(self, item):
-        """格式化通知内容"""
-        return f"""
-        发售时间: {item.get('releaseDate')}
-        更新时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-        """
 
     def process_item(self, item, spider):
         # Add timestamps to the item

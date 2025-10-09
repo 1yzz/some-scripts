@@ -150,3 +150,28 @@ class DataMapper:
         product['product_hash'] = product['spider_name'] + '_' + DataMapper._generate_hash(f"{product['name']}|{product['url']}")
 
         return product
+
+    @staticmethod
+    def map_op_base_shop_to_product(raw_item):
+        """将OP Base Shop数据映射到ProductItem"""
+        product = ProductItem()
+        
+        # 基础信息
+        product['source'] = 'op_base_shop'
+        product['spider_name'] = raw_item.get('spider_name')
+        product['url'] = raw_item.get('url')
+        product['ip'] = raw_item.get('ip')
+
+          # 商品信息映射
+        product['name'] = raw_item.get('title')
+        product['description'] = raw_item.get('desc', '')
+        product['price'] = raw_item.get('price')
+        product['category'] = raw_item.get('category')
+        product['release_date'] = raw_item.get('releaseDate')
+        product['images'] = raw_item.get('images', [])
+
+        # 同步CDN_Keys
+        product['cdn_keys'] = raw_item.get('cdn_keys', [])
+        product['product_hash'] = product['spider_name'] + '_' + DataMapper._generate_hash(f"{product['name']}|{product['url']}")
+
+        return product
