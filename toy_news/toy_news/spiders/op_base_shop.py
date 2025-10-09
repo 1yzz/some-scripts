@@ -43,7 +43,7 @@ class OnePieceBaseShopSpider(scrapy.Spider):
                 'url': f"{self.domain}/item/{item['productID']}",
                 'title': item.get("productName", {}).get('ja', item["productID"]),
                 'productID': item['productID'],
-                'price': f"{item["price"]}", # convert to string
+                'price': str(item["price"]), # convert to string
                 'releaseDate': item["releaseDate"],
                 'category': item.get("mainCategories", [{}])[0].get('categoryCode', ''),
                 'images': [i['url'] for i in item["productImageMulti"]],
