@@ -22,18 +22,17 @@ class UploadToCOSPipeline:
         self.cos_prefix = settings.get('COS_PREFIX')
         self.is_prod = settings.get('IS_PROD', False)
         self.spider_name = ''
-        self.logger = None
 
         if not self.is_prod:
             self.cos_prefix = 'toy_news_dev'
 
         # Log COS configuration
-        self.logger.info("="*50)
-        self.logger.info("COS Configuration:")
-        self.logger.info(f"Bucket: {self.bucket}")
-        self.logger.info(f"Region: {self.region}")
-        self.logger.info(f"Files Store: {self.files_store}")
-        self.logger.info("="*50)
+        print("="*50)
+        print("COS Configuration:")
+        print(f"Bucket: {self.bucket}")
+        print(f"Region: {self.region}")
+        print(f"Files Store: {self.files_store}")
+        print("="*50)
 
     def _init_cos_client(self, settings):
         secret_id = settings.get('COS_SECRET_ID')
@@ -48,7 +47,6 @@ class UploadToCOSPipeline:
 
     def open_spider(self, spider):
         self.spider_name = spider.name
-        self.logger = spider.logger
 
 
     def _get_title(self, item):
