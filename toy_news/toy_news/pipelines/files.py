@@ -208,7 +208,7 @@ class UploadToCOSPipeline:
             return signed_path
 
         except Exception as e:
-            self.logger.error(f"Failed to sign bandai hobby file url: {str(e)}")
+            self.logger.warning(f"Failed to sign bandai hobby file url: {str(e)}")
             return url
 
         
