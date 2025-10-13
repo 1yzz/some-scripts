@@ -1,11 +1,10 @@
 import scrapy
 
 class TamashiiWebSpider(scrapy.Spider):
-    name = "tamashii_web"
     allowed_domains = ["tamashiiweb.com"]
-    start_urls = ["https://tamashiiweb.com"]
+    start_urls = []
     pageCount = 0
-    maxPage = 5
+    maxPage = 1
 
     custom_settings = {
         'ITEM_PIPELINES': {

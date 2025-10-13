@@ -191,6 +191,9 @@ class UploadToCOSPipeline:
         return item
 
     def _sign_bandai_hobby_file_url(self, url):
+        API_URL = 'https://assets-signedurl.bandai-hobby.net/get-signed-url'
+        API_OS_URL = 'https://assets-signedurl-global.bandai-hobby.net/get-signed-url'
+
         """
         单独签名
         e.g. https://assets-signedurl.bandai-hobby.net/get-signed-url?path=/hobby/jp/product/2025/06/IozvvkGT0E8kwrp5/f3xhSPJda8GRIDK2.jpg
@@ -198,5 +201,16 @@ class UploadToCOSPipeline:
         # get the path
         path = urlparse(url).path
         # sign the path
-        signed_path = requests.get(f"https://assets-signedurl.bandai-hobby.net/get-signed-url?path={path}").json()['signedUrl']
-        return signed_path
+        try:
+            response = requests.get(f"{API_URL}?path={path}")
+            response.raise_for_status() 
+            signed_path = response.json()['signedUrl']
+            return signed_path
+
+        except Exception as e:
+            self.logger.error(f"Failed to sign bandai hobby file url: {str(e)}")
+            return url
+
+        
+        
+       
