@@ -58,6 +58,8 @@ class DataNormalizationPipeline:
             return 'bandai_hobby'
         elif 'op_base_shop' in spider_name:
             return 'op_base_shop'
+        elif 'tamashii_web' in spider_name:
+            return 'tamashii_web'
         return 'unknown'
         
     def _normalize_and_save(self, item, spider):
@@ -75,6 +77,8 @@ class DataNormalizationPipeline:
                 normalized_item = DataMapper.map_bandai_hobby_to_product(adapter)
             elif source == 'op_base_shop':
                 normalized_item = DataMapper.map_op_base_shop_to_product(adapter)
+            elif source == 'tamashii_web':
+                normalized_item = DataMapper.map_tamashii_web_to_product(adapter)
             else:
                 return None
                 

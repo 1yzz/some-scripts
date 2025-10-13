@@ -36,8 +36,6 @@ class ProductItem(BaseItem):
     raw_data_id = scrapy.Field()     # 原始数据的引用ID
 
 
-
-
 class JumpCalItem(BaseItem):
     """Jump Calendar数据Item"""
     releaseDate = scrapy.Field()
@@ -58,7 +56,6 @@ class BspPrizeItem(BaseItem):
     characters = scrapy.Field()
     file_urls = scrapy.Field()
     files = scrapy.Field()          # 兼容现有pipeline
-
 
 
 class BandaiHobbyItem(BaseItem):
@@ -171,6 +168,28 @@ class DataMapper:
         product['images'] = raw_item.get('images', [])
 
         # 同步CDN_Keys
+        product['cdn_keys'] = raw_item.get('cdn_keys', [])
+        product['product_hash'] = product['spider_name'] + '_' + DataMapper._generate_hash(f"{product['name']}|{product['url']}")
+
+        return product
+
+    @staticmethod
+    def map_tamashii_web_to_product(raw_item):
+        """将Tamashii Web数据映射到ProductItem"""
+        product = ProductItem()
+        
+        # 基础信息
+        product['source'] = 'tamashii_web'
+        product['spider_name'] = raw_item.get('spider_name')
+        product['url'] = raw_item.get('url')
+        product['ip'] = raw_item.get('ip')
+
+        product['name'] = raw_item.get('title')
+        product['price'] = raw_item.get('price')
+        product['category'] = raw_item.get('category')
+        product['release_date'] = raw_item.get('releaseDate')
+        product['images'] = raw_item.get('images', [])
+        product['description'] = raw_item.get('desc', '')
         product['cdn_keys'] = raw_item.get('cdn_keys', [])
         product['product_hash'] = product['spider_name'] + '_' + DataMapper._generate_hash(f"{product['name']}|{product['url']}")
 
