@@ -7,6 +7,17 @@ import scrapy
 import hashlib
 
 
+# 映射函数注册表（在类外部定义）
+_MAPPERS = {}
+
+def register_mapper(source_name):
+    """装饰器：注册映射函数"""
+    def decorator(func):
+        _MAPPERS[source_name] = func
+        return func
+    return decorator
+
+
 class BaseItem(scrapy.Item):
     """基础Item - 所有爬虫数据的通用字段"""
     # 元数据
@@ -35,41 +46,19 @@ class ProductItem(BaseItem):
     # 原始数据引用
     raw_data_id = scrapy.Field()     # 原始数据的引用ID
 
-
-class JumpCalItem(BaseItem):
-    """Jump Calendar数据Item"""
-    releaseDate = scrapy.Field()
-    genre = scrapy.Field()
-    goodsName = scrapy.Field()
-    price = scrapy.Field()
-    maker = scrapy.Field()
-    file_urls = scrapy.Field()
-
-
-class BspPrizeItem(BaseItem):
-    """BSP Prize数据Item"""
-    title = scrapy.Field()
-    releaseDate = scrapy.Field()
-    gallery = scrapy.Field()
-    thumbs = scrapy.Field()
-    desc = scrapy.Field()
-    characters = scrapy.Field()
-    file_urls = scrapy.Field()
-    files = scrapy.Field()          # 兼容现有pipeline
-
-
-class BandaiHobbyItem(BaseItem):
-    """Bandai Hobby数据Item"""
-    title = scrapy.Field()
-    releaseDate = scrapy.Field()
-    price = scrapy.Field()
-    desc = scrapy.Field()
-    gallery = scrapy.Field()
-    file_urls = scrapy.Field()
-
+    # 额外字段
+    extra_fields = scrapy.Field()    # 额外字段
 
 class DataMapper:
     """数据映射器 - 将原始数据映射到归一化结构"""
+    
+    @staticmethod
+    def map_to_product(raw_item, source):
+        """统一入口：根据 source 自动选择映射函数"""
+        mapper = _MAPPERS.get(source)
+        if mapper:
+            return mapper(raw_item)
+        return None
     
     @staticmethod
     def _generate_hash(text):
@@ -77,6 +66,7 @@ class DataMapper:
         return hashlib.md5(text.encode('utf-8')).hexdigest()[:8]
     
     @staticmethod
+    @register_mapper('jump_cal')
     def map_jump_cal_to_product(raw_item):
         """将JumpCal数据映射到ProductItem"""
         product = ProductItem()
@@ -99,6 +89,7 @@ class DataMapper:
         return product
     
     @staticmethod
+    @register_mapper('bsp_prize')
     def map_bsp_prize_to_product(raw_item):
         """将BSP Prize数据映射到ProductItem"""
         product = ProductItem()
@@ -124,6 +115,7 @@ class DataMapper:
         return product
 
     @staticmethod
+    @register_mapper('bandai_hobby')
     def map_bandai_hobby_to_product(raw_item):
         """将Bandai Hobby数据映射到ProductItem"""
         product = ProductItem()
@@ -149,6 +141,7 @@ class DataMapper:
         return product
 
     @staticmethod
+    @register_mapper('op_base_shop')
     def map_op_base_shop_to_product(raw_item):
         """将OP Base Shop数据映射到ProductItem"""
         product = ProductItem()
@@ -174,6 +167,7 @@ class DataMapper:
         return product
 
     @staticmethod
+    @register_mapper('tamashii_web')
     def map_tamashii_web_to_product(raw_item):
         """将Tamashii Web数据映射到ProductItem"""
         product = ProductItem()
@@ -192,5 +186,15 @@ class DataMapper:
         product['description'] = raw_item.get('desc', '')
         product['cdn_keys'] = raw_item.get('cdn_keys', [])
         product['product_hash'] = product['spider_name'] + '_' + DataMapper._generate_hash(f"{product['name']}|{product['url']}")
+
+        product['extra_fields'] = [{
+            'key': 'salesForm',
+            'label': '販売方法',
+            'value': raw_item.get('salesForm')
+        }, {
+            'key': 'openDate',
+            'label': '预订开始日期',
+            'value': raw_item.get('openDate')
+        }]
 
         return product

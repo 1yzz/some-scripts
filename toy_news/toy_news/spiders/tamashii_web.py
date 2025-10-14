@@ -4,11 +4,11 @@ class TamashiiWebSpider(scrapy.Spider):
     allowed_domains = ["tamashiiweb.com"]
     start_urls = []
     pageCount = 0
-    maxPage = 1
+    maxPage = 2
 
     custom_settings = {
         'ITEM_PIPELINES': {
-            "toy_news.pipelines.files.UploadToCOSPipeline": 600,
+            #"toy_news.pipelines.files.UploadToCOSPipeline": 600,
             "toy_news.pipelines.mongo.MongoDBPipeline": 700,
             "toy_news.pipelines.normalization.DataNormalizationPipeline": 900,
             "toy_news.pipelines.translation.TranslationPipeline": 950,
@@ -64,4 +64,16 @@ class TamashiiWebSHFSpider(TamashiiWebSpider):
     name = "tamashii_web_shf"
     start_urls = [
         "https://tamashiiweb.com/special/shf/?page=1&sa=JAPAN&chara=&sub_brand=&ck1=1&ck2=1&ck3=1&ck4=1&ck5=1&order=release#!",
+    ]
+
+class TamashiiWebFZeroSpider(TamashiiWebSpider):
+    name = "tamashii_web_fzero"
+    start_urls = [
+        'https://tamashiiweb.com/item_brand/figuarts_zero/1/?number=20&sa=JAPAN&character=&sub_chara=&brand=&sub_brand=&order=release&ck1=1&ck2=1&ck3=1&ck4=1&ck5=1#category_search',
+    ]
+
+class TamashiiWebMetaBuildSpider(TamashiiWebSpider):
+    name = "tamashii_web_meta_build"
+    start_urls = [
+        'https://tamashiiweb.com/item_brand/metal_build/'
     ]
