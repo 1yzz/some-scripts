@@ -4,7 +4,7 @@ class TamashiiWebSpider(scrapy.Spider):
     allowed_domains = ["tamashiiweb.com"]
     start_urls = []
     pageCount = 0
-    maxPage = 2
+    maxPage = 1
 
     custom_settings = {
         'ITEM_PIPELINES': {
