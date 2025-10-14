@@ -2,7 +2,6 @@ import scrapy
 from datetime import datetime
 
 class BspPrizeSpider(scrapy.Spider):
-    name = "bsp_prize"
     domain = "https://bsp-prize.jp"
     ip = "BSP"
     collection_name = "bsp_prize"
@@ -64,4 +63,49 @@ class BspPrizeOPAllSpider(BspPrizeSpider):
     ip = "ONEPIECE"
     start_urls = [
         f"https://bsp-prize.jp/search/?ref=title&title=IP00002025&page={index}"  for index in reversed(range(2, 23))
-    ]   
+    ]
+
+class BspPrizeNarutoSpider(BspPrizeSpider):
+    name = 'bsp_prize_naruto'
+    ip = "NARUTO"
+    start_urls = [
+        'https://bsp-prize.jp/search/?ref=title&title=IP00006142'
+    ]
+
+
+class BspPrizeHunterSpider(BspPrizeSpider):
+    name = 'bsp_prize_hunter'
+    ip = "HUNTER"
+    start_urls = [
+        'https://bsp-prize.jp/search/?ref=title&title=IP00006048'
+    ]
+
+class BspPrizeDragonBallSpider(BspPrizeSpider):
+    name = 'bsp_prize_dragon_ball'
+    ip = "DRAGONBALL"
+    start_urls = [
+        'https://bsp-prize.jp/search/?ref=title&title=IP00003375'
+    ]
+
+class BspPrizeKimetsuSpider(BspPrizeSpider):
+    name = 'bsp_prize_kimetsu'
+    ip = "鬼滅の刃"
+    start_urls = [
+        'https://bsp-prize.jp/search/?ref=title&title=IP00002034'
+    ]
+
+
+class BspPrizeJujutsuSpider(BspPrizeSpider):
+    name = 'bsp_prize_jujutsu'
+    ip = "呪術廻戦"
+    start_urls = [
+        'https://bsp-prize.jp/search/?ref=title&title=IP00002080'
+    ]
+
+
+class BspPrizeBleachSpider(BspPrizeSpider):
+    name = 'bsp_prize_bleach'
+    ip = "BLEACH"
+    start_urls = [
+        'https://bsp-prize.jp/search/?ref=title&title=IP00004767'
+    ]
