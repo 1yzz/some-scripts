@@ -77,3 +77,21 @@ class TamashiiWebMetaBuildSpider(TamashiiWebSpider):
     start_urls = [
         'https://tamashiiweb.com/item_brand/metal_build/'
     ]
+
+class TamashiiWebLuffySpider(TamashiiWebSpider):
+    name = "tamashii_web_luffy"
+    start_urls = [
+        'https://tamashiiweb.com/special/luffys/',
+    ]
+
+class TamashiiWebKaiTaiShouKiSpider(TamashiiWebSpider):
+    name = "tamashii_web_kaitai_shou_ki"
+    start_urls = [
+        'https://tamashiiweb.com/item_brand/kaitai_shou_ki/',
+    ]
+
+class TamashiiWebRobotTamashiiSpider(TamashiiWebSpider):
+    name = "tamashii_web_robot_tamashii"
+    start_urls = [
+        'https://tamashiiweb.com/item_brand/robot_tamashii/'
+    ]
