@@ -60,6 +60,8 @@ class DataNormalizationPipeline:
             return 'op_base_shop'
         elif 'tamashii_web' in spider_name:
             return 'tamashii_web'
+        elif 'ramen_toy' in spider_name:
+            return 'ramen_toy'
         return 'unknown'
         
     def _normalize_and_save(self, item, spider):

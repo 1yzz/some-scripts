@@ -198,3 +198,24 @@ class DataMapper:
         }]
 
         return product
+
+    @staticmethod
+    @register_mapper('ramen_toy')
+    def map_ramen_toy_to_product(raw_item):
+        """将Ramen Toy数据映射到ProductItem"""
+        product = ProductItem()
+        
+        # 基础信息
+        product['source'] = 'ramen_toy'
+        product['spider_name'] = raw_item.get('spider_name')
+        product['url'] = raw_item.get('url')
+        product['ip'] = raw_item.get('ip')
+
+        # 商品信息映射
+        product['name'] = raw_item.get('title')
+        product['price'] = raw_item.get('price')
+        product['images'] = raw_item.get('images', [])
+        product['description'] = raw_item.get('desc', '')
+        product['cdn_keys'] = raw_item.get('cdn_keys', [])
+        product['product_hash'] = product['spider_name'] + '_' + DataMapper._generate_hash(f"{product['name']}|{product['url']}")
+        return product
