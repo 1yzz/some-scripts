@@ -260,10 +260,6 @@ class DataMapper:
             'key': 'summary',
             'label': '摘要',
             'value': raw_item.get('summary', '')
-        }, {
-            'key': 'tags',
-            'label': '标签',
-            'value': raw_item.get('tags', [])
         }]
         
         return product
