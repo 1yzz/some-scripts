@@ -14,11 +14,10 @@ class DengekiHobbySpider(scrapy.Spider):
             "toy_news.pipelines.files.UploadToCOSPipeline": 600,
             "toy_news.pipelines.mongo.MongoDBPipeline": 700,
             "toy_news.pipelines.normalization.DataNormalizationPipeline": 900,
-           # "toy_news.pipelines.translation.TranslationPipeline": 950,
-            #"toy_news.pipelines.notify.NotifyPipeline": 1000,
+            "toy_news.pipelines.translation.TranslationPipeline": 950,
         },
-        # 设置blognew专用的集合名称
-        'BLOGNEW_COLLECTION': 'blognew_normalized',
+        # 设置blognews专用的集合名称
+        'BLOGNEWS_COLLECTION': 'blognews_normalized',
     }
 
     def start_requests(self):

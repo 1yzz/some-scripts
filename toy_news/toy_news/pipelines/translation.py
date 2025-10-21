@@ -10,11 +10,11 @@ class TranslationPipeline:
     只处理包含product_hash的归一化数据
     只添加到翻译队列，不修改原始item
     """
-    def __init__(self, mongo_uri, mongo_db, mongo_collection, blognew_collection, redis_host, redis_password, redis_port, redis_db, redis_translation_queue):
+    def __init__(self, mongo_uri, mongo_db, mongo_collection, blognews_collection, redis_host, redis_password, redis_port, redis_db, redis_translation_queue):
         self.mongo_uri = mongo_uri
         self.mongo_db = mongo_db
         self.mongo_collection = mongo_collection
-        self.blognew_collection = blognew_collection
+        self.blognews_collection = blognews_collection
         self.client = None
         self.db = None
         self.translation_queue = redis_translation_queue
@@ -43,7 +43,7 @@ class TranslationPipeline:
             mongo_uri=crawler.settings.get('MONGO_URI', 'mongodb://localhost:27017/'),
             mongo_db=crawler.settings.get('MONGO_DATABASE', 'scrapy_items'),
             mongo_collection=crawler.settings.get('MONGO_COLLECTION', 'toys_normalized'),
-            blognew_collection=crawler.settings.get('BLOGNEW_COLLECTION', 'blognew_normalized'),
+            blognews_collection=crawler.settings.get('BLOGNEWS_COLLECTION', 'blognews_normalized'),
             redis_host=redis_host,
             redis_password=redis_password,
             redis_port=redis_port,
@@ -58,12 +58,12 @@ class TranslationPipeline:
         
         # 归一化数据集合
         self.normalized_collection = self.db[self.mongo_collection]
-        self.blognew_normalized_collection = self.db[self.blognew_collection]
+        self.blognews_normalized_collection = self.db[self.blognews_collection]
         # self.pending_collection = self.db['toys_translation_pending']
         
         # 创建索引
         self.normalized_collection.create_index('product_hash', unique=True)
-        self.blognew_normalized_collection.create_index('article_hash', unique=True)
+        self.blognews_normalized_collection.create_index('article_hash', unique=True)
         # self.pending_collection.create_index('product_hash', unique=True)
         
         # 测试 Redis 连接
@@ -156,7 +156,7 @@ class TranslationPipeline:
         spider.logger.debug(f"Processing translation queue for blognew: {article_hash}")
         
         # 检查归一化数据是否已经有翻译
-        normalized_doc = self.blognew_normalized_collection.find_one({'article_hash': article_hash})
+        normalized_doc = self.blognews_normalized_collection.find_one({'article_hash': article_hash})
         if normalized_doc:
             # 检查每个字段的翻译状态
             translated_fields = []
@@ -224,7 +224,9 @@ class TranslationPipeline:
             # 构建符合Go Message结构的消息格式
             queue_message = {
                 "id": str(uuid.uuid4()),
-                "type": "translation",
+                "source": adapter.get('source'),
+                # 根据metadata中的article_hash判断是博客新闻数据还是商品数据
+                "type":  "translation-blognews" if metadata.get('article_hash') else "translation",
                 "payload": {
                     "_id": adapter.get('_id'),
                     "created_at": datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ"),

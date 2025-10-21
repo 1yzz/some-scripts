@@ -11,11 +11,11 @@ from itemadapter import ItemAdapter
 class DataNormalizationPipeline:
     """数据归一化Pipeline - 只负责归一化，不存储原始数据"""
     
-    def __init__(self, mongo_uri, mongo_db, mongo_collection, blognew_collection):
+    def __init__(self, mongo_uri, mongo_db, mongo_collection, blognews_collection):
         self.mongo_uri = mongo_uri
         self.mongo_db = mongo_db
         self.mongo_collection = mongo_collection
-        self.blognew_collection = blognew_collection
+        self.blognews_collection = blognews_collection
         
     @classmethod
     def from_crawler(cls, crawler):
@@ -23,22 +23,22 @@ class DataNormalizationPipeline:
             mongo_uri=crawler.settings.get("MONGO_URI", "mongodb://localhost:27017/"),
             mongo_db=crawler.settings.get("MONGO_DATABASE", "scrapy_items"),
             mongo_collection=crawler.settings.get("MONGO_COLLECTION", "toys_normalized"),
-            blognew_collection=crawler.settings.get("BLOGNEW_COLLECTION", "blognew_normalized"),
+            blognews_collection=crawler.settings.get("BLOGNEWS_COLLECTION", "blognews_normalized"),
         )
         
     def open_spider(self, spider):
         self.client = pymongo.MongoClient(self.mongo_uri)
         self.db = self.client[self.mongo_db]
         self.normalized_collection = self.db[self.mongo_collection]
-        self.blognew_normalized_collection = self.db[self.blognew_collection]
+        self.blognews_normalized_collection = self.db[self.blognews_collection]
         
         # 创建商品数据基础索引
         self.normalized_collection.create_index('product_hash', unique=True)
         self.normalized_collection.create_index([('source', 1), ('ip', 1)])
         
         # 创建博客新闻数据基础索引
-        self.blognew_normalized_collection.create_index('article_hash', unique=True)
-        self.blognew_normalized_collection.create_index([('source', 1), ('ip', 1)])
+        self.blognews_normalized_collection.create_index('article_hash', unique=True)
+        self.blognews_normalized_collection.create_index([('source', 1), ('ip', 1)])
         
     def close_spider(self, spider):
         self.client.close()
@@ -191,7 +191,7 @@ class DataNormalizationPipeline:
             
             try:
                 # 使用 upsert 避免重复
-                result = self.blognew_normalized_collection.update_one(
+                result = self.blognews_normalized_collection.update_one(
                     {'raw_data_id': normalized_data['raw_data_id']},
                     update_doc,
                     upsert=True
