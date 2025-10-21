@@ -28,7 +28,7 @@ class DengekiHobbySpider(scrapy.Spider):
         """解析列表页面"""
         links = response.css(".archive-post .post-item .thumb a")
         self.logger.info(f"Found {len(links)} links on page {response.url}")
-        for link in links[:1]:
+        for link in links:
             yield response.follow(link, callback=self.parse_article)
 
         next_page = response.css(".wp-pagenavi a.nextpostslink::attr(href)").get()
