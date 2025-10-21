@@ -55,9 +55,19 @@ class UploadToCOSPipeline:
         # 2. replace / and \ with _
         return re.sub(r'[\s/\\]', '_', title)
 
+    def _get_title_hash(self, item):
+        """生成基于标题的16位哈希值，避免文件名过长"""
+        title = item.get('title', '')
+        url = item.get('url', '')
+        # 使用标题和URL生成哈希值
+        hash_input = f"{title}|{url}"
+        return hashlib.md5(hash_input.encode('utf-8')).hexdigest()[:16]
+
     def file_path(self, url, item):
         filename = os.path.basename(urlparse(url).path)
-        path = f"{self.cos_prefix}/{self.spider_name}/{item.get('ip')}/{self._get_title(item)}/{filename}"
+        # 使用哈希值而不是完整标题来避免路径过长
+        title_hash = self._get_title_hash(item)
+        path = f"{self.cos_prefix}/{self.spider_name}/{item.get('ip')}/{title_hash}/{filename}"
         return path.lstrip('/')  # Remove leading slash
     
     def process_item(self, item, spider):

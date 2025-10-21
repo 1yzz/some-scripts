@@ -49,12 +49,43 @@ class ProductItem(BaseItem):
     # 额外字段
     extra_fields = scrapy.Field()    # 额外字段
 
+
+class BlogNewItem(BaseItem):
+    """博客新闻数据归一化Item - 与商品数据结构完全不同"""
+    # 核心新闻信息
+    article_hash = scrapy.Field()    # 文章哈希ID (基于标题+URL生成)
+    title = scrapy.Field()           # 文章标题
+    content = scrapy.Field()         # 文章内容
+    summary = scrapy.Field()         # 文章摘要
+    author = scrapy.Field()          # 作者
+    publish_date = scrapy.Field()    # 发布日期
+    tags = scrapy.Field()            # 标签列表
+    category = scrapy.Field()        # 文章分类
+    
+    # 媒体文件
+    images = scrapy.Field()          # 图片URL列表
+    cdn_keys = scrapy.Field()        # 文件CDN key
+    
+    # 原始数据引用
+    raw_data_id = scrapy.Field()     # 原始数据的引用ID
+
+    # 额外字段
+    extra_fields = scrapy.Field()    # 额外字段
+
 class DataMapper:
     """数据映射器 - 将原始数据映射到归一化结构"""
     
     @staticmethod
     def map_to_product(raw_item, source):
         """统一入口：根据 source 自动选择映射函数"""
+        mapper = _MAPPERS.get(source)
+        if mapper:
+            return mapper(raw_item)
+        return None
+    
+    @staticmethod
+    def map_to_blognew(raw_item, source):
+        """统一入口：根据 source 自动选择博客新闻映射函数"""
         mapper = _MAPPERS.get(source)
         if mapper:
             return mapper(raw_item)
@@ -219,3 +250,29 @@ class DataMapper:
         product['cdn_keys'] = raw_item.get('cdn_keys', [])
         product['product_hash'] = product['spider_name'] + '_' + DataMapper._generate_hash(f"{product['name']}|{product['url']}")
         return product
+
+    @staticmethod
+    @register_mapper('blog_dengeki_hobby')
+    def map_dengeki_hobby_to_blognew(raw_item):
+        """将电撃ホビーウェブ数据映射到BlogNewItem"""
+        blognew = BlogNewItem()
+        
+        # 基础信息
+        blognew['source'] = 'blog_dengeki_hobby'
+        blognew['spider_name'] = raw_item.get('spider_name')
+        blognew['url'] = raw_item.get('url')
+        blognew['ip'] = raw_item.get('ip')
+        
+        # 博客新闻信息映射
+        blognew['title'] = raw_item.get('title')
+        blognew['content'] = raw_item.get('content', '')
+        blognew['summary'] = raw_item.get('summary', '')
+        blognew['author'] = raw_item.get('author')
+        blognew['publish_date'] = raw_item.get('publish_date')
+        blognew['tags'] = raw_item.get('tags', [])
+        blognew['category'] = raw_item.get('category')
+        blognew['images'] = raw_item.get('images', [])
+        blognew['cdn_keys'] = raw_item.get('cdn_keys', [])
+        blognew['article_hash'] = blognew['spider_name'] + '_' + DataMapper._generate_hash(f"{blognew['title']}|{blognew['url']}")
+        
+        return blognew

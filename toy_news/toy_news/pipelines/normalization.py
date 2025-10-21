@@ -11,10 +11,11 @@ from itemadapter import ItemAdapter
 class DataNormalizationPipeline:
     """数据归一化Pipeline - 只负责归一化，不存储原始数据"""
     
-    def __init__(self, mongo_uri, mongo_db, mongo_collection):
+    def __init__(self, mongo_uri, mongo_db, mongo_collection, blognew_collection):
         self.mongo_uri = mongo_uri
         self.mongo_db = mongo_db
         self.mongo_collection = mongo_collection
+        self.blognew_collection = blognew_collection
         
     @classmethod
     def from_crawler(cls, crawler):
@@ -22,16 +23,22 @@ class DataNormalizationPipeline:
             mongo_uri=crawler.settings.get("MONGO_URI", "mongodb://localhost:27017/"),
             mongo_db=crawler.settings.get("MONGO_DATABASE", "scrapy_items"),
             mongo_collection=crawler.settings.get("MONGO_COLLECTION", "toys_normalized"),
+            blognew_collection=crawler.settings.get("BLOGNEW_COLLECTION", "blognew_normalized"),
         )
         
     def open_spider(self, spider):
         self.client = pymongo.MongoClient(self.mongo_uri)
         self.db = self.client[self.mongo_db]
         self.normalized_collection = self.db[self.mongo_collection]
+        self.blognew_normalized_collection = self.db[self.blognew_collection]
         
-        # 创建基础索引
+        # 创建商品数据基础索引
         self.normalized_collection.create_index('product_hash', unique=True)
         self.normalized_collection.create_index([('source', 1), ('ip', 1)])
+        
+        # 创建博客新闻数据基础索引
+        self.blognew_normalized_collection.create_index('article_hash', unique=True)
+        self.blognew_normalized_collection.create_index([('source', 1), ('ip', 1)])
         
     def close_spider(self, spider):
         self.client.close()
@@ -62,10 +69,29 @@ class DataNormalizationPipeline:
             return 'tamashii_web'
         elif 'ramen_toy' in spider_name:
             return 'ramen_toy'
+        elif 'dengeki_hobby' in spider_name:
+            return 'blog_dengeki_hobby'
         return 'unknown'
         
     def _normalize_and_save(self, item, spider):
         """归一化数据并保存"""
+        adapter = ItemAdapter(item)
+        source = adapter.get('source')
+
+        try:
+            # 根据数据源类型选择不同的处理方式
+            if source.startswith('blog'):
+                return self._normalize_blognew_and_save(item, spider)
+            else:
+                return self._normalize_product_and_save(item, spider)
+                
+        except Exception as e:
+            spider.logger.error(f"Error normalizing item: {e}")
+            
+        return None
+        
+    def _normalize_product_and_save(self, item, spider):
+        """归一化商品数据并保存"""
         adapter = ItemAdapter(item)
         source = adapter.get('source')
 
@@ -127,6 +153,73 @@ class DataNormalizationPipeline:
             return normalized_item
                 
         except Exception as e:
-            spider.logger.error(f"Error normalizing item: {e}")
+            spider.logger.error(f"Error normalizing product item: {e}")
+            
+        return None
+        
+    def _normalize_blognew_and_save(self, item, spider):
+        """归一化博客新闻数据并保存"""
+        adapter = ItemAdapter(item)
+        source = adapter.get('source')
+
+        try:
+            # 数据归一化 - 使用统一入口自动路由
+            normalized_item = DataMapper.map_to_blognew(adapter, source)
+            
+            if not normalized_item:
+                spider.logger.error(f"No blognew mapper found for source: {source}")
+                return None
+            
+            # 处理归一化后的数据
+            # 如果原始数据有_id，保存引用关系
+            if '_id' in adapter:
+                normalized_item['raw_data_id'] = adapter['_id']
+            
+            # 保存归一化数据
+            normalized_data = dict(**normalized_item)
+            
+            # 使用MongoDB操作符优雅地处理时间戳
+            update_doc = {
+                '$set': normalized_data,
+                '$setOnInsert': {
+                    'createdAt': datetime.now()
+                },
+                '$currentDate': {
+                    'updatedAt': True
+                }
+            }
+            
+            try:
+                # 使用 upsert 避免重复
+                result = self.blognew_normalized_collection.update_one(
+                    {'raw_data_id': normalized_data['raw_data_id']},
+                    update_doc,
+                    upsert=True
+                )
+                spider.logger.info(f"Normalized blognew: {normalized_data['raw_data_id']} {normalized_data['title']}")   
+                
+                # 判断是否为新增数据
+                is_new = result.upserted_id is not None
+            
+                # 将判断结果添加到 spider 的 notify_meta 中
+                if not hasattr(spider, 'notify_meta'):
+                    spider.notify_meta = {}
+                
+                spider.notify_meta[normalized_data['article_hash']] = {
+                    'enable': is_new,
+                    'isNew': is_new,
+                    'type': 'image_text' if normalized_data.get('images') else 'text'
+                }
+                spider.logger.info(f"Notify meta: {spider.notify_meta[normalized_data['article_hash']]}")
+
+            except pymongo.errors.DuplicateKeyError:
+                # If we get a duplicate key error, log it and return the original item
+                spider.logger.warning(f"Duplicate blognew found: {normalized_data['article_hash']} {normalized_data['title']}")
+                return item
+            
+            return normalized_item
+                
+        except Exception as e:
+            spider.logger.error(f"Error normalizing blognew item: {e}")
             
         return None
