@@ -97,13 +97,14 @@ class TranslationPipeline:
         
         if product_hash:
             # 处理商品数据
-            return self._process_product_translation(adapter, spider, product_hash)
+            return self._process_product_translation(item, spider, product_hash)
         else:
             # 不是归一化数据，直接返回
             return item
     
-    def _process_product_translation(self, adapter, spider, product_hash):
+    def _process_product_translation(self, item, spider, product_hash):
         """处理商品数据翻译"""
+        adapter = ItemAdapter(item)
         spider.logger.debug(f"Processing translation queue for product: {product_hash}")
         
         # 检查归一化数据是否已经有翻译
@@ -141,7 +142,7 @@ class TranslationPipeline:
                 self._add_to_translation_queue(adapter, spider, untranslated_fields)
         
         # 返回原始item，不添加翻译字段
-        return adapter
+        return item
     
     def _add_to_translation_queue(self, adapter, spider, fields_to_translate=None):
         """将归一化数据添加到翻译队列"""
