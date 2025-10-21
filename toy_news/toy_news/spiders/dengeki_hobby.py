@@ -57,10 +57,14 @@ class DengekiHobbySpider(scrapy.Spider):
 
         content = response.css("#contents .entry_body *::text").getall() or []
         content = '\n'.join([p.strip() for p in content]) or ''
+        # clean content: repalce multiline \n with single \n using regex
+        content = re.sub(r'\n+', '\n', content)
 
         summary = extract_with_css("#contents .entry_body p:first-child::text") or ''
 
-        images = response.css("#contents .entry_body img::attr(src)").getall() or []    
+        images = response.css("#contents .entry_body img::attr(src)").getall() or []   
+        # filter out lazyload images
+        images = [img for img in images if 'lazy-load' not in img or '1x1.trans.gif' not in img]
 
         # 构建博客新闻数据结构
         data = {
