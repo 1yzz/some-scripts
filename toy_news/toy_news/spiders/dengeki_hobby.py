@@ -16,8 +16,6 @@ class DengekiHobbySpider(scrapy.Spider):
             "toy_news.pipelines.normalization.DataNormalizationPipeline": 900,
             "toy_news.pipelines.translation.TranslationPipeline": 950,
         },
-        # 设置blognews专用的集合名称
-        'BLOGNEWS_COLLECTION': 'blognews_normalized',
     }
 
     def start_requests(self):

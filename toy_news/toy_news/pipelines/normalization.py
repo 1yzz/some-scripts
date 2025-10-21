@@ -79,11 +79,7 @@ class DataNormalizationPipeline:
         source = adapter.get('source')
 
         try:
-            # 根据数据源类型选择不同的处理方式
-            if source.startswith('blog'):
-                return self._normalize_blognew_and_save(item, spider)
-            else:
-                return self._normalize_product_and_save(item, spider)
+            return self._normalize_product_and_save(item, spider)
                 
         except Exception as e:
             spider.logger.error(f"Error normalizing item: {e}")
@@ -154,72 +150,5 @@ class DataNormalizationPipeline:
                 
         except Exception as e:
             spider.logger.error(f"Error normalizing product item: {e}")
-            
-        return None
-        
-    def _normalize_blognew_and_save(self, item, spider):
-        """归一化博客新闻数据并保存"""
-        adapter = ItemAdapter(item)
-        source = adapter.get('source')
-
-        try:
-            # 数据归一化 - 使用统一入口自动路由
-            normalized_item = DataMapper.map_to_blognew(adapter, source)
-            
-            if not normalized_item:
-                spider.logger.error(f"No blognew mapper found for source: {source}")
-                return None
-            
-            # 处理归一化后的数据
-            # 如果原始数据有_id，保存引用关系
-            if '_id' in adapter:
-                normalized_item['raw_data_id'] = adapter['_id']
-            
-            # 保存归一化数据
-            normalized_data = dict(**normalized_item)
-            
-            # 使用MongoDB操作符优雅地处理时间戳
-            update_doc = {
-                '$set': normalized_data,
-                '$setOnInsert': {
-                    'createdAt': datetime.now()
-                },
-                '$currentDate': {
-                    'updatedAt': True
-                }
-            }
-            
-            try:
-                # 使用 upsert 避免重复
-                result = self.blognews_normalized_collection.update_one(
-                    {'raw_data_id': normalized_data['raw_data_id']},
-                    update_doc,
-                    upsert=True
-                )
-                spider.logger.info(f"Normalized blognew: {normalized_data['raw_data_id']} {normalized_data['title']}")   
-                
-                # 判断是否为新增数据
-                is_new = result.upserted_id is not None
-            
-                # 将判断结果添加到 spider 的 notify_meta 中
-                if not hasattr(spider, 'notify_meta'):
-                    spider.notify_meta = {}
-                
-                spider.notify_meta[normalized_data['article_hash']] = {
-                    'enable': is_new,
-                    'isNew': is_new,
-                    'type': 'image_text' if normalized_data.get('images') else 'text'
-                }
-                spider.logger.info(f"Notify meta: {spider.notify_meta[normalized_data['article_hash']]}")
-
-            except pymongo.errors.DuplicateKeyError:
-                # If we get a duplicate key error, log it and return the original item
-                spider.logger.warning(f"Duplicate blognew found: {normalized_data['article_hash']} {normalized_data['title']}")
-                return item
-            
-            return normalized_item
-                
-        except Exception as e:
-            spider.logger.error(f"Error normalizing blognew item: {e}")
             
         return None
