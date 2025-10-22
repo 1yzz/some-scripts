@@ -249,7 +249,9 @@ class DataMapper:
         product['manufacturer'] = 'Bandai'  # 电撃ホビー主要报道Bandai产品
         product['images'] = raw_item.get('images', [])
         product['cdn_keys'] = raw_item.get('cdn_keys', [])
-        product['product_hash'] = product['spider_name'] + '_' + DataMapper._generate_hash(f"{product['name']}|{product['url']}")
+
+        # 多个spider_name爬虫可能爬取同一个url，所以需要使用source和url生成product_hash
+        product['product_hash'] = product['source'] + '_' + DataMapper._generate_hash(f"{product['name']}|{product['url']}")
         
         # 将博客特有的信息存储到extra_fields中
         product['extra_fields'] = [{
