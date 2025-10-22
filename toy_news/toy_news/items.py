@@ -251,7 +251,7 @@ class DataMapper:
         product['cdn_keys'] = raw_item.get('cdn_keys', [])
 
         # 多个spider_name爬虫可能爬取同一个url，所以需要使用source和url生成product_hash
-        product['product_hash'] = product['source'] + '_' + DataMapper._generate_hash(f"{product['name']}|{product['url']}")
+        product['product_hash'] = product['source'] + '_' + DataMapper._generate_hash(f"{product['url']}|{product['name']}")
         
         # 将博客特有的信息存储到extra_fields中
         product['extra_fields'] = [{
