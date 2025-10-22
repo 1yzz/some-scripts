@@ -48,6 +48,7 @@ class DengekiHobbySpider(scrapy.Spider):
         author = extract_with_css("#contents .titleBox .meta2 .author::text") or '電撃ホビー編集部'
         tags = response.css("#contents .titleBox .meta1 .keyword li a::text").getall()
         publish_date = extract_with_css("#contents .titleBox .date *::text")
+        category = extract_with_css("#contents .breadcrumbList ul li:nth-of-type(2) a::text") or 'GUNPLA'
 
         # publish_date to datetime e.g. purify publish_date: 公開日：2025年10月21日 08:37 to 2025-10-21 08:37
         if publish_date:
@@ -73,7 +74,7 @@ class DengekiHobbySpider(scrapy.Spider):
             'author': author,
             'publish_date': publish_date,
             'tags': tags,
-            'category': 'GUNPLA',
+            'category': category,
             'ip': getattr(self, 'ip', 'DENGEKI_HOBBY'),  # 使用爬虫的ip属性
             'images': images,
         }
@@ -81,6 +82,7 @@ class DengekiHobbySpider(scrapy.Spider):
         # 设置文件下载URLs
         data["file_urls"] = images
         yield data
+
 
 class DengekiHobbyGunplaSpider(DengekiHobbySpider):
     """电撃ホビーウェブ - 高达模型爬虫"""
@@ -91,10 +93,20 @@ class DengekiHobbyGunplaSpider(DengekiHobbySpider):
     ]
 
 
-# class DengekiHobbyFigureSpider(DengekiHobbySpider):
-#     """电撃ホビーウェブ - 美少女手办爬虫"""
-#     name = "dengeki_hobby_figure"
-#     ip = "DENGEKI_HOBBY_FIGURE"
-#     start_urls = [
-#         "https://hobby.dengeki.com/figure/",
-#     ]
+class DengekiHobbyGundamSpider(DengekiHobbySpider):
+    """电撃ホビーウェブ - 高达爬虫"""
+    name = "blog_dengeki_hobby_gundam"
+    ip = "DENGEKI_HOBBY_GUNDAM"
+    start_urls = [
+       'https://hobby.dengeki.com/tag/gundam/'
+    ]
+
+
+class DengekiHobbyCardSpider(DengekiHobbySpider):
+    """电撃ホビーウェブ - 卡片爬虫"""
+    name = "blog_dengeki_hobby_card"
+    ip = "DENGEKI_HOBBY_CARD"
+    start_urls = [
+       'https://hobby.dengeki.com/tag/card/'
+    ]
+
