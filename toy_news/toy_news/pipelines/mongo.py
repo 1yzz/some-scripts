@@ -2,7 +2,7 @@ import re
 import textwrap
 from itemadapter import ItemAdapter
 import pymongo
-from datetime import datetime
+from datetime import datetime, timezone
 
 class MongoDBPipeline:
     """
@@ -61,7 +61,7 @@ class MongoDBPipeline:
 
     def process_item(self, item, spider):
         # Add timestamps to the item
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
 
         adapter = ItemAdapter(item)
 
@@ -73,7 +73,10 @@ class MongoDBPipeline:
         # 设置更新操作（$set 更新所有字段）
         update = {
             "$setOnInsert": {"createdAt": now},
-            "$set": {"updatedAt":now, **adapter.asdict()},
+            "$set": {**adapter.asdict()},
+            "$currentDate": {
+                "updatedAt": True
+            }
         }
 
         try:

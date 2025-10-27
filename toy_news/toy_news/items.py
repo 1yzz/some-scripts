@@ -72,6 +72,17 @@ class DataMapper:
     def _generate_hash(text):
         """生成确定性哈希"""
         return hashlib.md5(text.encode('utf-8')).hexdigest()[:8]
+
+    @staticmethod
+    @register_mapper('test')
+    def map_test_to_product(raw_item):
+        """将Test数据映射到ProductItem"""
+        product = ProductItem()
+        product['source'] = 'test'
+        product['spider_name'] = raw_item.get('spider_name')
+        product['url'] = raw_item.get('url')
+        product['product_hash'] = product['source'] + '_' + DataMapper._generate_hash(f"{product['url']}")
+        return product
     
     @staticmethod
     @register_mapper('jump_cal')

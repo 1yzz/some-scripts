@@ -4,7 +4,7 @@
 """
 
 import pymongo
-from datetime import datetime
+from datetime import datetime, timezone
 from ..items import DataMapper
 from itemadapter import ItemAdapter
 
@@ -64,7 +64,7 @@ class DataNormalizationPipeline:
             return 'ramen_toy'
         elif 'dengeki_hobby' in spider_name:
             return 'blog_dengeki_hobby'
-        return 'unknown'
+        return spider_name
         
     def _normalize_and_save(self, item, spider):
         """归一化数据并保存"""
@@ -104,7 +104,7 @@ class DataNormalizationPipeline:
             update_doc = {
                 '$set': normalized_data,
                 '$setOnInsert': {
-                    'createdAt': datetime.now()
+                    'createdAt': datetime.now(timezone.utc),
                 },
                 '$currentDate': {
                     'updatedAt': True
