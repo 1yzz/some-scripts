@@ -110,3 +110,53 @@ class DengekiHobbyCardSpider(DengekiHobbySpider):
        'https://hobby.dengeki.com/tag/card/'
     ]
 
+
+class DengekiHobbySFXSpider(DengekiHobbySpider):
+    """电撃ホビーウェブ - 特撮爬虫"""
+    name = "blog_dengeki_hobby_sfx"
+    ip = "DENGEKI_HOBBY_SFX"
+    start_urls = [
+      'https://hobby.dengeki.com/tag/sfx/'
+    ]
+
+
+class DengekiHobbyHeroAndMechaFigureSpider(DengekiHobbySpider):
+    """电撃ホビーウェブ - 英雄和机械人形爬虫"""
+    name = "blog_dengeki_hobby_hero_and_mecha_figure"
+    ip = "DENGEKI_HOBBY_HERO_AND_MECHA_FIGURE"
+    start_urls = [
+       'https://hobby.dengeki.com/tag/heroandmecha_figure/'
+    ]
+
+class DengekiHobbyKamenriderSpider(DengekiHobbySpider):
+    """电撃ホビーウェブ - 假面骑士爬虫"""
+    name = "blog_dengeki_hobby_kamenrider"
+    ip = "DENGEKI_HOBBY_KAMENRIDER"
+    start_urls = [
+       'https://hobby.dengeki.com/tag/kamenrider/'
+    ]
+
+class DengekiDragonballSpider(DengekiHobbySpider):
+    """电撃ホビーウェブ - 龙珠爬虫"""
+    name = "blog_dengeki_hobby_dragonball"
+    ip = "DENGEKI_HOBBY_DRAGONBALL"
+    start_urls = [
+       'https://hobby.dengeki.com/tag/dragonball/'
+    ]
+
+class DengekiHobbyDisneySpider(DengekiHobbySpider):
+    """电撃ホビーウェブ - 迪士尼爬虫"""
+    name = "blog_dengeki_hobby_disney"
+    ip = "DENGEKI_HOBBY_DISNEY"
+    start_urls = [
+       'https://hobby.dengeki.com/tag/disney/'
+    ]
+
+
+class DengekiHobbyOnePieceSpider(DengekiHobbySpider):
+    """电撃ホビーウェブ - 海贼王爬虫"""
+    name = "blog_dengeki_hobby_onepiece"
+    ip = "DENGEKI_HOBBY_ONEPIECE"
+    start_urls = [
+       'https://hobby.dengeki.com/tag/one-piece/'
+    ]
