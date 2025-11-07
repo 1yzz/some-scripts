@@ -32,15 +32,14 @@ class OneKujiSpider(scrapy.Spider):
         for item in response.css('div.categoryCol ul.itemList li a::attr(href)'):
             product_url = item.get()
             if product_url:
-                yield response.follow(product_url, callback=self.parse_detail)
-                # product_url = response.urljoin(product_url)
-                # yield scrapy.Request(url=product_url, callback=self.parse_detail)
+                product_url = response.urljoin(product_url)
+                yield scrapy.Request(url=product_url, callback=self.parse_detail)
 
         # Pagination: look for next page
         next_page = response.css('.releaseCol p.monthArrow.next a::attr(href)').get()
         self.logger.info(f"Next page: {next_page}")
-        #if next_page:
-            #yield response.follow(next_page, callback=self.parse)
+        if next_page:
+            yield response.follow(next_page, callback=self.parse)
 
     def parse_detail(self, response):
         def extract_with_css(query):
