@@ -276,3 +276,32 @@ class DataMapper:
         }]
         
         return product
+
+    @staticmethod
+    @register_mapper('1kuji')
+    def map_1kuji_to_product(raw_item):
+        """将1kuji数据映射到ProductItem"""
+        product = ProductItem()
+        
+        # 基础信息
+        product['source'] = '1kuji'
+        product['spider_name'] = raw_item.get('spider_name')
+        product['url'] = raw_item.get('url')
+        product['ip'] = raw_item.get('ip')
+
+        product['name'] = raw_item.get('title')
+        product['price'] = raw_item.get('price')
+        product['release_date'] = raw_item.get('releaseDate')
+        product['images'] = raw_item.get('gallery', [])
+        product['description'] = raw_item.get('desc', '')
+        product['cdn_keys'] = raw_item.get('cdn_keys', [])
+
+        product['product_hash'] = product['source'] + '_' + DataMapper._generate_hash(f"{product['url']}|{product['name']}")
+
+        product['extra_fields'] = [{
+            'key': 'releaseForm',
+            'label': '販売方法',
+            'value': raw_item.get('releaseForm')
+        }]
+
+        return product

@@ -64,6 +64,8 @@ class DataNormalizationPipeline:
             return 'ramen_toy'
         elif 'dengeki_hobby' in spider_name:
             return 'blog_dengeki_hobby'
+        elif '1kuji' in spider_name:
+            return '1kuji'
         return spider_name
         
     def _normalize_and_save(self, item, spider):
