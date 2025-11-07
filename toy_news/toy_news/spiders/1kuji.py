@@ -9,7 +9,7 @@ class OneKujiSpider(scrapy.Spider):
     allowed_domains = ["1kuji.com"]
     start_urls = [
         "https://1kuji.com/products",
-        #"https://1kuji.com/products?sale_month=4&sale_year=2026"
+        #"https://1kuji.com/products?sale_month=11&sale_year=2025"
         ]
     ip = "ONE_KUJI"
     collection_name = "one_kuji"
@@ -85,6 +85,9 @@ class OneKujiSpider(scrapy.Spider):
             gallery.add(response.urljoin(banner))
        
         for src in response.css('#galleryCol > .galleryColInner.glBox > ul:first-child li a::attr(href)').getall():
+            gallery.add(response.urljoin(src))
+
+        for src in price_list.css('.itemColGallery li:first-child img::attr(src)').getall():
             gallery.add(response.urljoin(src))
 
         data = {
