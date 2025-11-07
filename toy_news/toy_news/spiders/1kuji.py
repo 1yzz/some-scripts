@@ -39,8 +39,8 @@ class OneKujiSpider(scrapy.Spider):
         # Pagination: look for next page
         next_page = response.css('.releaseCol p.monthArrow.next a::attr(href)').get()
         self.logger.info(f"Next page: {next_page}")
-        if next_page:
-            yield response.follow(next_page, callback=self.parse)
+        #if next_page:
+            #yield response.follow(next_page, callback=self.parse)
 
     def parse_detail(self, response):
         def extract_with_css(query):
