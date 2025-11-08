@@ -14,25 +14,21 @@ class MongoDBPipeline:
     - Stores full history in separate _history collection
     - Tracks changes between versions
     - Version numbering for each item
-    - Configurable via MONGO_ENABLE_HISTORY setting (default: True)
     """
-    def __init__(self, mongo_uri, mongo_db, mongo_collection, enable_history=True):
+    def __init__(self, mongo_uri, mongo_db, mongo_collection):
         self.mongo_uri = mongo_uri
         self.mongo_db = mongo_db
         self.mongo_collection = mongo_collection
-        self.enable_history = enable_history
         self.history_collection_name = f"{mongo_collection}_history"
 
     @classmethod
     def from_crawler(cls, crawler):
         spider_name = crawler.spider.name
         mongo_collection = getattr(crawler.spider, 'collection_name', f'{spider_name}')
-        enable_history = crawler.settings.getbool("MONGO_ENABLE_HISTORY", True)
         return cls(
             mongo_uri=crawler.settings.get("MONGO_URI"),
             mongo_db=crawler.settings.get("MONGO_DATABASE", "scrapy_items"),
-            mongo_collection=mongo_collection,
-            enable_history=enable_history
+            mongo_collection=mongo_collection
         )
 
     def open_spider(self, spider):
@@ -40,18 +36,14 @@ class MongoDBPipeline:
         self.db = self.client[self.mongo_db]
         self.collection = self.db[self.mongo_collection]
         
-        # Initialize history collection if enabled
-        if self.enable_history:
-            self.history_collection = self.db[self.history_collection_name]
-            self._setup_history_collection(spider)
+        # Initialize history collection
+        self.history_collection = self.db[self.history_collection_name]
+        self._setup_history_collection(spider)
         
         # 创建唯一索引（如果尚未存在）
         self.collection.create_index("url", unique=True)
         self.collection.create_index("updatedAt")
-        
-        # Add version index if history enabled
-        if self.enable_history:
-            self.collection.create_index("version")
+        self.collection.create_index("version")
 
         # Define the validator schema
         validator = {
@@ -165,7 +157,7 @@ class MongoDBPipeline:
         
         # Detect changes if updating
         changes = {}
-        if not is_new and self.enable_history:
+        if not is_new:
             changes = self._detect_changes(old_data, item_dict)
 
         # Remove system fields from item_dict to avoid conflicts
@@ -187,7 +179,7 @@ class MongoDBPipeline:
         if is_new:
             # For new documents, set version on insert
             update["$setOnInsert"]["version"] = 1
-        elif changes and self.enable_history:
+        elif changes:
             # For updates with changes, increment version in $set
             update["$set"]["version"] = new_version
 
@@ -203,35 +195,32 @@ class MongoDBPipeline:
             adapter['_id'] = new_data['_id']
             item['_id'] = new_data['_id']
 
-            # Save to history if enabled
-            if self.enable_history:
-                if is_new:
-                    spider.logger.info(f"New item created: {adapter['url']}")
-                    self._save_to_history(
-                        data_id=new_data['_id'],
-                        url=adapter['url'],
-                        item_dict=item_dict,
-                        changes={'_initial': True},
-                        version=1,
-                        spider=spider
-                    )
-                elif changes:
-                    spider.logger.info(
-                        f"Item updated: {adapter['url']} "
-                        f"(v{new_version}, {len(changes)} fields changed)"
-                    )
-                    self._save_to_history(
-                        data_id=new_data['_id'],
-                        url=adapter['url'],
-                        item_dict=item_dict,
-                        changes=changes,
-                        version=new_version,
-                        spider=spider
-                    )
-                else:
-                    spider.logger.debug(f"No changes detected: {adapter['url']}")
+            # Save to history
+            if is_new:
+                spider.logger.info(f"New item created: {adapter['url']}")
+                self._save_to_history(
+                    data_id=new_data['_id'],
+                    url=adapter['url'],
+                    item_dict=item_dict,
+                    changes={'_initial': True},
+                    version=1,
+                    spider=spider
+                )
+            elif changes:
+                spider.logger.info(
+                    f"Item updated: {adapter['url']} "
+                    f"(v{new_version}, {len(changes)} fields changed)"
+                )
+                self._save_to_history(
+                    data_id=new_data['_id'],
+                    url=adapter['url'],
+                    item_dict=item_dict,
+                    changes=changes,
+                    version=new_version,
+                    spider=spider
+                )
             else:
-                spider.logger.info(f"Upserted item: {adapter['url']}")
+                spider.logger.debug(f"No changes detected: {adapter['url']}")
                 
         except pymongo.errors.DuplicateKeyError:
             spider.logger.warning(f"Duplicate name found: {adapter['url']}")
