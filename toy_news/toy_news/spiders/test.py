@@ -1,4 +1,5 @@
 import scrapy
+from datetime import datetime
 
 class TestSpider(scrapy.Spider):
     name = "test"
@@ -15,10 +16,10 @@ class TestSpider(scrapy.Spider):
             yield scrapy.Request(url=url, callback=self.parse)
 
     def parse(self, response):
-        for quote in response.css(".quote").getall():
+        for quote in response.css(".quote"):
             yield {
-                'url': response.url,
-                'text': quote.css(".text::text").get(),
+                'url': response.url + quote.css(".text::text").get(),
+                'text': quote.css(".text::text").get() + datetime.now().isoformat(),
                 'author': quote.css(".author::text").get(),
                 'tags': quote.css(".tag::text").getall(),
             }

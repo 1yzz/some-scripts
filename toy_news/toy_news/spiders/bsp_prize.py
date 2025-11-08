@@ -10,7 +10,7 @@ class BspPrizeSpider(scrapy.Spider):
     custom_settings = {
         'ITEM_PIPELINES': {
             "toy_news.pipelines.files.UploadToCOSPipeline": 600,
-            "toy_news.pipelines.bsp_prize.BspMongoPipeline": 700,
+            "toy_news.pipelines.mongo.MongoDBPipeline": 700,
             "toy_news.pipelines.normalization.DataNormalizationPipeline": 900,
             "toy_news.pipelines.translation.TranslationPipeline": 950,
             "toy_news.pipelines.notify.NotifyPipeline": 1000,

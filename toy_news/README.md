@@ -1,6 +1,6 @@
 # Toy News - 统一数据归一化与翻译系统
 
-一个基于 Scrapy 的玩具资讯爬取与翻译系统，支持数据归一化、智能去重和缓存翻译。
+一个基于 Scrapy 的玩具资讯爬取与翻译系统，支持数据归一化、智能去重、缓存翻译和完整历史记录追踪。
 
 ## 🏗️ 系统架构
 
@@ -67,16 +67,25 @@ MongoDB Collections:
 │   ├── jump_cal_op          # ONEPIECE 商品数据
 │   ├── jump_cal_hunter      # Hunter×Hunter 商品数据  
 │   ├── bsp_prize_op         # BSP Prize 数据
+│   ├── jump_cal_op_history  # 历史记录
 │   └── ...                  # 其他原始数据集合
 │
 ├── 归一化数据层  
-│   └── toys_normalized  # 统一商品数据结构
-│       ├── product_hash     # 商品哈希ID (去重标识)
-│       ├── name            # 商品名称
-│       ├── description     # 商品描述  
-│       ├── nameCN          # 中文商品名称 (翻译结果)
-│       ├── descriptionCN   # 中文描述 (翻译结果)
-│       └── ...             # 其他归一化字段
+│   ├── toys_normalized      # 统一商品数据结构 (最新版本)
+│   │   ├── product_hash     # 商品哈希ID (去重标识)
+│   │   ├── name            # 商品名称
+│   │   ├── description     # 商品描述  
+│   │   ├── nameCN          # 中文商品名称 (翻译结果)
+│   │   ├── descriptionCN   # 中文描述 (翻译结果)
+│   │   ├── version         # 版本号
+│   │   └── ...             # 其他归一化字段
+│   │
+│   └── toys_normalized_history  # 完整历史记录
+│       ├── product_id      # 主文档引用
+│       ├── version         # 版本号
+│       ├── snapshot        # 完整数据快照
+│       ├── changes         # 变更字段
+│       └── timestamp       # 时间戳
 │
 └── 翻译管理层
     ├── translation_pending  # 待翻译队列
@@ -210,6 +219,28 @@ ITEM_PIPELINES = {
 ```
 
 ## 🔧 核心功能
+
+### 历史记录追踪 ⭐ NEW
+
+自动追踪所有数据变更，保存完整历史版本：
+
+- **完整快照** - 每次更新保存完整数据快照
+- **变更检测** - 自动检测并记录字段变化
+- **版本管理** - 为每个项目维护版本号
+- **查询工具** - 内置工具分析历史数据
+
+详细文档请查看：[HISTORY_TRACKING.md](HISTORY_TRACKING.md)
+
+```bash
+# 查看项目历史
+python scripts/query_history.py --collection toys_normalized --url "https://..."
+
+# 查看统计信息
+python scripts/query_history.py --collection toys_normalized --stats
+
+# 查看最近变更
+python scripts/query_history.py --collection toys_normalized --recent 10
+```
 
 ### 数据归一化
 
