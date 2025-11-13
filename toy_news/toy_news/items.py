@@ -204,7 +204,7 @@ class DataMapper:
         product['images'] = raw_item.get('images', [])
         product['description'] = raw_item.get('desc', '')
         product['cdn_keys'] = raw_item.get('cdn_keys', [])
-        product['product_hash'] = product['spider_name'] + '_' + DataMapper._generate_hash(f"{product['name']}|{product['url']}")
+        product['product_hash'] = product['source'] + '_' + DataMapper._generate_hash(f"{product['name']}|{product['url']}")
 
         product['extra_fields'] = [{
             'key': 'salesForm',
