@@ -42,6 +42,12 @@ class TamashiiWebSpider(scrapy.Spider):
             return response.xpath(f'//dt[text()="{text}"]/following-sibling::dd/text()').get(default="").strip()
         
         gallery = [response.urljoin(href) for href in response.css("#mainimage_2021 li a::attr(href)").getall()]
+
+        detail_imgs = [response.urljoin(href) for href in response.css("#itemdtl_features .news_img_02 li img::attr(src)").getall()]
+
+        feature_text = "\n".join([t.strip() for t in response.css("#itemdtl_features .itemdtl_news_txt_area p::text").getall() if t.strip()])
+        info_text = "\n".join([t.strip() for t in response.css("#itemdtl_info *::text").getall() if t.strip()]) 
+
         data = {
             'url': response.url,
             "category": extract_with_css("#itemdtl_main .item_brand::text"),
@@ -51,8 +57,8 @@ class TamashiiWebSpider(scrapy.Spider):
             "salesForm":extract_with_xpath("販売方法"),
             'openDate':  extract_with_xpath("予約開始日"),
             'releaseDate':  extract_with_xpath("発売日"),
-            'images': [i for i in gallery],
-            'desc': "",
+            'images': [i for i in gallery + detail_imgs],
+            'desc': f"{feature_text}\n{info_text}",
         }
 
         data["file_urls"] = [i for i in data["images"]]
