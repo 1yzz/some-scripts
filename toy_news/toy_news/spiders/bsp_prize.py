@@ -114,12 +114,20 @@ class BspPrizeChainSawSpider(BspPrizeSpider):
     name = 'bsp_prize_chain_saw'
     ip = "チェインソー"
     start_urls = [
-         'https://bsp-prize.jp/search/?ref=title&title=IP00004957'
+         f'https://bsp-prize.jp/search/?ref=title&title=IP00004957'
     ]
 
 class BspPrizeJoJoSpider(BspPrizeSpider):
     name = 'bsp_prize_jojo'
     ip = "ジョジョ"
     start_urls = [
-        'https://bsp-prize.jp/search/?ref=title&title=IP00003150'
+        f'https://bsp-prize.jp/search/?ref=title&title=IP00003150'
+    ]
+
+class BspPrizeUmaSpider(BspPrizeSpider):
+    name = 'bsp_prize_uma'
+    ip = "ウマ娘"
+
+    start_urls = [
+        f'https://bsp-prize.jp/search/?ref=title&title=IP00002839'
     ]
