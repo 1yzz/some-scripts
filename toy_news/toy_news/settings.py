@@ -27,6 +27,9 @@ MONGO_DATABASE="scrapy_items"
 WECOM_WEBHOOK = config('WECOM_WEBHOOK', default='')
 WECOM_NOTIFY_ENABLED = True
 
+# Notify API URL
+NOTIFY_API_URL = config('NOTIFY_API_URL', default='http://localhost:6181')
+
 # File storage configuration
 FILES_STORE = "/var/data/scrapy_files"
 

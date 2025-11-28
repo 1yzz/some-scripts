@@ -221,6 +221,37 @@ class MongoDBPipeline:
                 )
             else:
                 spider.logger.debug(f"No changes detected: {adapter['url']}")
+
+            # 如果存在变化, 发送消息到notify API
+            try:
+                if changes:
+                    message = {
+                        "id": str(uuid.uuid4()),
+                        "source": adapter.get('source'),
+                        "type":  "translation",
+                        "payload": {
+                            "_id": adapter.get('_id'),
+                            "created_at": datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ"),
+                            **item_dict,
+                            "description": '[Update] ' + item_dict.get('description')
+                        },
+                        "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ"),
+                        "attempts": 0,
+                        "max_retries": 5
+                    }
+                    resp = requests.post(
+                        url=f"{spider.settings.get('NOTIFY_API_URL')}/api/v1/translation/messages",
+                        json={
+                            "message": [message]
+                        },
+                        headers={
+                            "Content-Type": "application/json"
+                        }
+                    )
+                    resp.raise_for_status()
+                    spider.logger.info(f"Changes sent to notify API: {resp.json()}")
+            except Exception as e:
+                spider.logger.error(f"Warning: Failed to send changes to notify API: {e}")
                 
         except pymongo.errors.DuplicateKeyError:
             spider.logger.warning(f"Duplicate name found: {adapter['url']}")
