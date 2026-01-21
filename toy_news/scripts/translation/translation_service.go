@@ -118,7 +118,7 @@ func NewDeepSeekTranslator() *DeepSeekTranslator {
 	return &DeepSeekTranslator{
 		apiKey:      apiKey,
 		baseURL:     "https://api.deepseek.com",
-		model:       "deepseek-coder",
+		model:       "deepseek-chat",
 		temperature: 1.3,
 	}
 }

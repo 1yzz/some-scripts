@@ -94,6 +94,12 @@ class TranslationPipeline:
         
         # 判断数据类型并处理
         product_hash = adapter.get('product_hash')
+
+        if 'dengeki_hobby' in adapter.get('source'):
+            # 如果标题包含BEST10，则跳过翻译
+            if adapter.get('title') and 'BEST10' in adapter.get('title'):
+                spider.logger.debug(f"Skipping translation for Dengeki Hobby BEST: {adapter.get('title')}")
+                return item
         
         if product_hash:
             # 处理商品数据
@@ -178,7 +184,7 @@ class TranslationPipeline:
                 },
                 "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ"),
                 "attempts": 0,
-                "max_retries": 5
+                "max_retries": 3
             }
             
             # 插入到待redis中的翻译队列
