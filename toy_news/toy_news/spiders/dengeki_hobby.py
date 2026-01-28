@@ -8,6 +8,7 @@ class DengekiHobbySpider(scrapy.Spider):
     start_urls = []
     pageCount = 0
     maxPage = 2
+    spider_type = 'news'
 
     custom_settings = {
         'ITEM_PIPELINES': {

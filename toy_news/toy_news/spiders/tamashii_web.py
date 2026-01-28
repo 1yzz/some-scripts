@@ -5,6 +5,7 @@ class TamashiiWebSpider(scrapy.Spider):
     start_urls = []
     pageCount = 0
     maxPage = 1
+    spider_type = 'product'
 
     custom_settings = {
         'ITEM_PIPELINES': {

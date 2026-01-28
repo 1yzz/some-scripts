@@ -15,20 +15,23 @@ class MongoDBPipeline:
     - Tracks changes between versions
     - Version numbering for each item
     """
-    def __init__(self, mongo_uri, mongo_db, mongo_collection):
+    def __init__(self, mongo_uri, mongo_db, mongo_collection, spider_type):
         self.mongo_uri = mongo_uri
         self.mongo_db = mongo_db
         self.mongo_collection = mongo_collection
         self.history_collection_name = f"{mongo_collection}_history"
+        self.spider_type = spider_type
 
     @classmethod
     def from_crawler(cls, crawler):
         spider_name = crawler.spider.name
         mongo_collection = getattr(crawler.spider, 'collection_name', f'{spider_name}')
+        spider_type = getattr(crawler.spider, 'spider_type', 'product')
         return cls(
             mongo_uri=crawler.settings.get("MONGO_URI"),
             mongo_db=crawler.settings.get("MONGO_DATABASE", "scrapy_items"),
-            mongo_collection=mongo_collection
+            mongo_collection=mongo_collection,
+            spider_type=spider_type
         )
 
     def open_spider(self, spider):
@@ -94,7 +97,7 @@ class MongoDBPipeline:
             return {}
         
         changes = {}
-        exclude_fields = {'_id', 'updatedAt', 'createdAt', 'version'}
+        exclude_fields = {'_id', 'updatedAt', 'createdAt', 'version', 'spider_type'}
         
         for key in new_data.keys():
             if key in exclude_fields:
@@ -154,7 +157,8 @@ class MongoDBPipeline:
         
         # Prepare item dict
         item_dict = adapter.asdict()
-        
+        item_dict['spider_type'] = self.spider_type
+
         # Detect changes if updating
         changes = {}
         if not is_new:

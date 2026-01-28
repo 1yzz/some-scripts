@@ -3,6 +3,7 @@ import scrapy
 class RamenToySpider(scrapy.Spider):
     allowed_domains = ["ramentoy.com"]
     start_urls = []
+    spider_type = 'product'
 
     custom_settings = {
         'ITEM_PIPELINES': {

@@ -10,6 +10,7 @@ class BandaiHobbySpider(scrapy.Spider):
     start_urls = ["https://bandai-hobby.net/news/?cat=new_product"]
     ip = "BANDAI_HOBBY"
     collection_name = "bandai_hobby"
+    spider_type = 'product'
 
     # comment below for testing
     custom_settings = {

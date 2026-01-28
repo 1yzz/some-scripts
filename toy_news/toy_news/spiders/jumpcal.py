@@ -9,6 +9,7 @@ class JumpcalSpider(scrapy.Spider):
     start_urls = []
     ip = "JUMP"
     collection_name = "jump_cal"
+    spider_type = 'news'
 
     custom_settings = {
         'ITEM_PIPELINES': {

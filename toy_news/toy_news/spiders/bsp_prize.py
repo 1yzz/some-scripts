@@ -6,6 +6,7 @@ class BspPrizeSpider(scrapy.Spider):
     ip = "BSP"
     collection_name = "bsp_prize"
     start_urls = []
+    spider_type = 'product'
 
     custom_settings = {
         'ITEM_PIPELINES': {

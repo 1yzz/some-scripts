@@ -13,7 +13,7 @@ class OneKujiSpider(scrapy.Spider):
         ]
     ip = "ONE_KUJI"
     collection_name = "one_kuji"
-
+    spider_type = 'product'
     custom_settings = {
         'ITEM_PIPELINES': {
             "toy_news.pipelines.files.UploadToCOSPipeline": 600,
