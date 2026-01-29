@@ -11,17 +11,20 @@ from itemadapter import ItemAdapter
 class DataNormalizationPipeline:
     """数据归一化Pipeline - 只负责归一化，不存储原始数据"""
     
-    def __init__(self, mongo_uri, mongo_db, mongo_collection):
+    def __init__(self, mongo_uri, mongo_db, mongo_collection, spider_type):
         self.mongo_uri = mongo_uri
         self.mongo_db = mongo_db
         self.mongo_collection = mongo_collection
-        
+        self.spider_type = spider_type
+
     @classmethod
     def from_crawler(cls, crawler):
+        spider_type = getattr(crawler.spider, 'spider_type', 'product')
         return cls(
             mongo_uri=crawler.settings.get("MONGO_URI", "mongodb://localhost:27017/"),
             mongo_db=crawler.settings.get("MONGO_DATABASE", "scrapy_items"),
             mongo_collection=crawler.settings.get("MONGO_COLLECTION", "toys_normalized"),
+            spider_type=spider_type
         )
         
     def open_spider(self, spider):
@@ -43,6 +46,7 @@ class DataNormalizationPipeline:
         # 添加基础元数据
         adapter['spider_name'] = spider.name
         adapter['source'] = self._get_source_from_spider(spider.name)
+        adapter['spider_type'] = self.spider_type
         
         # 数据归一化并保存
         return self._normalize_and_save(item, spider)
